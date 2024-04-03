@@ -46,6 +46,30 @@ class UserController {
       });
     })
   }
+  
+  async index(req: Request, res: Response) {
+    const username = req.query.username;
+    const email = req.query.email;
+    const fullname = req.query.fullname;
+    const id = req.query.id;
+   
+    let options = [];
+    if (username) {
+      options.push({ username: { $regex: '.*' + username + '.*' }});
+    }
+    if (email) {
+      options.push({ email: { $regex: '.*' + email + '.*' }});
+    }
+    if (fullname) {
+      options.push({ fullname: { $regex: '.*' + fullname + '.*' }});
+    }
+    if (id) {
+      options.push({ _id: id});
+    }
+
+    let users = await People.find({ $or: options }, { password: 0 });
+    return res.status(200).json(users);
+  }
 }
 
 export {
