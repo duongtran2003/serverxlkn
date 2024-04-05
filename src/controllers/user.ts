@@ -37,7 +37,8 @@ class UserController {
     
     People.create(newUser)
     .then((user) => {
-      user.$set({ password: undefined })
+      user.$set({ password: undefined });
+      user.$set({ __v: undefined });
       return res.status(201).json(user);
     })
     .catch((err) => {
@@ -70,10 +71,10 @@ class UserController {
     let users: any = [];
 
     if (options.length) {
-      users = await People.find({ $or: options }, { password: 0 });
+      users = await People.find({ $or: options }, { password: 0, __v: 0 });
     }
     else {
-      users = await People.find({}, { password: 0 });
+      users = await People.find({}, { password: 0, __v: 0 });
     }
     return res.status(200).json(users);
   }
@@ -163,6 +164,7 @@ class UserController {
         });
       }
       updatedUser?.$set({ password: undefined });
+      updatedUser?.$set({ __v: undefined });
       return res.status(200).json(updatedUser);
     })
     .catch((err) => {

@@ -35,7 +35,8 @@ class AuthController {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
     });
-    user.$set({ password: undefined })
+    user.$set({ password: undefined });
+    user.$set({ __v: undefined });
     return res.status(200).json(user);
   }
   

@@ -15,6 +15,8 @@ const processSchema = new Schema<IProcess>({
     type: String,
     default: "Dang xu li"
   }
+}, {
+  timestamps: true
 });
 
 const Process = model<IProcess> ('Process', processSchema);
