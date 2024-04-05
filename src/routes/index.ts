@@ -5,9 +5,9 @@ import { actionRouter } from "./action";
 
 let router = Router();
 
-router.use('/user', userRoute);
+router.use('/users', userRoute);
 router.use('/auth', authRouter);
-router.use('/action', actionRouter);
+router.use('/actions', actionRouter);
 
 export {
   router
