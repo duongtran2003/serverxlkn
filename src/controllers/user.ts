@@ -176,6 +176,11 @@ class UserController {
   
   async delete(req: Request, res: Response) {
     const userId = req.params.id;
+    if (!userId) {
+      return res.status(400).json({
+        "message": "thieu thong tin",
+      })
+    }
     People.findByIdAndDelete(userId)
     .then(() => {
       return res.status(200).json({
@@ -184,7 +189,7 @@ class UserController {
     })
     .catch((err) => {
       return res.status(500).json({
-        "message": "server error" + err.message,
+        "message": "server error: " + err.message,
       });
     });
   }

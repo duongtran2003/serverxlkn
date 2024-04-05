@@ -8,6 +8,7 @@ const requestController = new RequestController();
 
 requestRouter.post('/', isAuthenticated, requestController.create);
 requestRouter.get('/:id?', isAuthenticated, requestController.index);
+requestRouter.delete('/:id', isAuthenticated, requestController.delete);
 
 export {
   requestRouter,

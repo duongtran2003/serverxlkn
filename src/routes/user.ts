@@ -8,8 +8,8 @@ const userRoute = Router();
 
 userRoute.post('/', isAuthenticated, isAdmin, userController.create);
 userRoute.get('/', userController.index);
-userRoute.patch('/update/:id', isAuthenticated, isAdmin, userController.update);
-userRoute.delete('/delete/:id', isAuthenticated, isAdmin, userController.delete);
+userRoute.patch('/:id', isAuthenticated, isAdmin, userController.update);
+userRoute.delete('/:id', isAuthenticated, isAdmin, userController.delete);
 
 export {
   userRoute
