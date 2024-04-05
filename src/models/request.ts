@@ -10,12 +10,10 @@ const requestSchema = new Schema<IRequest> ({
   },
   peopleId: {
     type: Schema.Types.ObjectId,
-    ref: 'People'
   },
   status: String,
   duplicateRequestId: {
     type: Schema.Types.ObjectId,
-    ref: 'Request',
     default: null,
   },
   result: {
