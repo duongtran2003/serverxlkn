@@ -4,7 +4,10 @@ import { IRequest } from "../interfaces/dbInterface";
 const requestSchema = new Schema<IRequest> ({
   title: String,
   content: String,
-  priority: Number,
+  priority: {
+    type: Number,
+    default: 1
+  },
   peopleId: {
     type: Schema.Types.ObjectId,
     ref: 'People'
