@@ -17,7 +17,6 @@ class AuthController {
         "message": "sai thong tin",
       });
     }
-    console.log(password, user);
     const result = await bcrypt.compare(password, user.password);
     if (!result) {
       return res.status(400).json({
