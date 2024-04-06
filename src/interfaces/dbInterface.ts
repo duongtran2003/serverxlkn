@@ -29,9 +29,34 @@ interface IRequest {
   result: string
 }
 
+interface IComment {
+  requestId: Schema.Types.ObjectId,
+  peopleId: Schema.Types.ObjectId,
+  comment: string,
+}
+
+interface ICategory {
+  description: string,
+}
+
+interface IDivision {
+  divisionName: string,
+  description: string,
+}
+
+interface IPeopleDivision {
+  peopleId: Schema.Types.ObjectId,
+  divisionId: Schema.Types.ObjectId,
+  actionId: Schema.Types.ObjectId,
+}
+
 export {
   IPeople,
   IAction,
   IProcess,
-  IRequest
+  IRequest,
+  IComment,
+  ICategory,
+  IDivision,
+  IPeopleDivision,
 }

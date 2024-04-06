@@ -8,7 +8,7 @@ class RequestController {
   async create(req: Request, res: Response) {
     const { title, content, priority } = req.body;
 
-    if (!title || !content) {
+    if (!title || !content || !priority) {
       return res.status(400).json({
         "message": "thieu thong tin",
       });
@@ -123,6 +123,10 @@ class RequestController {
       return res.status(200).json(requests);
     }
   }
+  
+  async update(req: Request, res: Response) {
+    //todo:
+  } 
   
   async delete(req: Request, res: Response) {
     const userId = res.locals.claims.userId;

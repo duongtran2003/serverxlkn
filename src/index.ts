@@ -5,7 +5,7 @@ import { router } from "./routes/index";
 
 let cookieParser = require('cookie-parser');
 
-const dotenv = require('dotenv').config();
+require('dotenv').config();
 
 let app = express();
 dbConnect();
