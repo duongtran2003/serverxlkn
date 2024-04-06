@@ -5,6 +5,7 @@ import { actionRouter } from "./action";
 import { requestRouter } from "./request";
 import { categoryRouter } from "./category";
 import { commentRouter } from "./comment";
+import { divisionRouter } from "./division";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use('/actions', actionRouter);
 router.use('/requests', requestRouter);
 router.use('/categories', categoryRouter);
 router.use('/comments', commentRouter);
+router.use('/divisions', divisionRouter);
 
 export {
   router
