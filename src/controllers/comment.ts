@@ -42,13 +42,13 @@ class CommentController {
   async index(req: Request, res: Response) {
     const { requestId } = req.query;
 
-    const queryField: any = {};
+    if (!requestId) {
+      return res.status(400).json({
+        "message": "thieu thong tin",
+      });
+    } 
 
-    if (requestId) {
-      queryField.requestId = requestId;
-    }
-      
-    const comments = await Comment.find(queryField).select("-__v");
+    const comments = await Comment.find({ requestId: requestId }).select("-__v");
     return res.status(200).json(comments);
   }
   

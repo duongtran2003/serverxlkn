@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Division } from "../models/division";
+import { PeopleDivision } from "../models/peopleDivision";
 
 class DivisionController {
   async create(req: Request, res: Response) {
@@ -18,6 +19,9 @@ class DivisionController {
     
     Division.create(newDivision)
     .then((division) => {
+      division.$set({
+        __v: undefined
+      });
       return res.status(201).json(division);
     })
     .catch((err) => {
@@ -28,7 +32,27 @@ class DivisionController {
   }
   
   async index(req: Request, res: Response) {
-    //todo: either get all divisions with their members, one specific division and its members by id or name
+    const divisionId = req.params.id;
+
+    if (!divisionId) {
+      const divisions = await Division.find({}).select("-__v");
+      return res.status(200).json(divisions);
+    }
+    
+    const division = await Division.findById(divisionId).select("-__v");
+    if (!division) {
+      return res.status(404).json({
+        "message": "khong tim thay division",
+      });
+    }
+    const divisionDetailed: any = division.toObject();
+    const divisionMembers: any = [];
+    const members = await PeopleDivision.find({ divisionId: divisionId });
+    for (const member of members) {
+      divisionMembers.push(member.peopleId);
+    }
+    divisionDetailed.members = divisionMembers;
+    return res.status(200).json(divisionDetailed);
   }
   
   async update(req: Request, res: Response) {
@@ -48,6 +72,9 @@ class DivisionController {
     
     Division.findByIdAndUpdate(divisionId, division, { new: true })
     .then((newDivision) => {
+      newDivision?.$set({
+        __v: undefined
+      });
       return res.status(200).json(newDivision);
     })
     .catch((err) => {

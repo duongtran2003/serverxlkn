@@ -35,11 +35,11 @@ class CategoryController {
         "message": "bad request"
       });
     }
-    if (!query && !categoryId) {
+    if (!categoryId) {
       const categories = await Category.find({}).select("-__v");
       return res.status(200).json(categories);
     }
-    else if (categoryId) {
+    else {
       const category = await Category.findById(categoryId).select("-__v");
       if (!category) {
         return res.status(404).json({
@@ -47,10 +47,6 @@ class CategoryController {
         });
       }
       return res.status(200).json(category);
-    }
-    else {
-      const categories = await Category.find({ description: { $regex: ".*" + query + ".*" } }).select("-__v");
-      return res.status(200).json(categories);
     }
   }
   
