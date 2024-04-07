@@ -15,6 +15,9 @@ class CategoryController {
     }
     Category.create(newCategory)
     .then((newCategory) => {
+      newCategory.$set({
+        __v: undefined,
+      })
       return res.status(201).json(newCategory);
     })
     .catch((err) => {
@@ -26,13 +29,27 @@ class CategoryController {
   
   async index(req: Request, res: Response) {
     const query = req.query.query;
-
-    if (!query) {
-      const categories = await Category.find({});
+    const categoryId = req.params.id;
+    if (query && categoryId) {
+      return res.status(400).json({
+        "message": "bad request"
+      });
+    }
+    if (!query && !categoryId) {
+      const categories = await Category.find({}).select("-__v");
       return res.status(200).json(categories);
     }
+    else if (categoryId) {
+      const category = await Category.findById(categoryId).select("-__v");
+      if (!category) {
+        return res.status(404).json({
+          "message": "khong tim thay danh muc",
+        });
+      }
+      return res.status(200).json(category);
+    }
     else {
-      const categories = await Category.find({ description: { $regex: ".*" + query + ".*" } });
+      const categories = await Category.find({ description: { $regex: ".*" + query + ".*" } }).select("-__v");
       return res.status(200).json(categories);
     }
   }
@@ -52,6 +69,9 @@ class CategoryController {
     
     Category.findByIdAndUpdate(categoryId, category, { new: true })
     .then((updated) => {
+      updated?.$set({
+        __v: undefined
+      })
       return res.status(200).json(updated);
     })
     .catch((err) => {
