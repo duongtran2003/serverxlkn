@@ -27,6 +27,9 @@ class CommentController {
 
     Comment.create(newComment)
     .then((comment) => {
+      comment.$set({
+        __v: undefined
+      });
       return res.status(201).json(comment);
     })
     .catch((err) => {
@@ -37,18 +40,15 @@ class CommentController {
   }
   
   async index(req: Request, res: Response) {
-    const { peopleId, requestId } = req.query;
+    const { requestId } = req.query;
 
     const queryField: any = {};
 
-    if (peopleId) {
-      queryField.peopleId = peopleId;
-    }
     if (requestId) {
       queryField.requestId = requestId;
     }
       
-    const comments = await Comment.find(queryField)
+    const comments = await Comment.find(queryField).select("-__v");
     return res.status(200).json(comments);
   }
   
@@ -78,6 +78,9 @@ class CommentController {
     
     Comment.findByIdAndUpdate(commentId, newComment, { new: true })
     .then((comment) => {
+      comment?.$set({
+        __v: undefined
+      });
       return res.status(200).json(comment);
     })
     .catch((err) => {
