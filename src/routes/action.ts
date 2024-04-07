@@ -7,6 +7,7 @@ const actionRouter = Router();
 const actionController = new ActionController();
 
 actionRouter.post('/', isAuthenticated, isAdmin, actionController.create);
+actionRouter.get('/:id?', isAuthenticated, actionController.index);
 
 export {
   actionRouter,

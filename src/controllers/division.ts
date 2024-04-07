@@ -101,7 +101,6 @@ class DivisionController {
       });
     }
     
-    //todo: check if this division has any member
     const members = await PeopleDivision.find({ divisionId: divisionId });
     if (members.length) {
       return res.status(409).json({
