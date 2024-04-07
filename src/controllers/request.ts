@@ -75,6 +75,11 @@ class RequestController {
         });
       }
       const request = await RequestModel.findById(process.requestId).select('-__v');
+      if (!request) {
+        return res.status(404).json({
+          "message": "khong tim thay request",
+        });
+      }
       return res.status(200).json(request);
     }
   }

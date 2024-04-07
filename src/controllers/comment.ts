@@ -66,8 +66,8 @@ class CommentController {
     const userId = res.locals.claims.userId;
     const comment = await Comment.findById(commentId);
     if (!comment) {
-      return res.status(400).json({
-        "message": "sai id",
+      return res.status(404).json({
+        "message": "khong tim thay comment",
       });
     }
     if (comment.peopleId != userId) {
@@ -78,6 +78,11 @@ class CommentController {
     
     Comment.findByIdAndUpdate(commentId, newComment, { new: true })
     .then((comment) => {
+      if (!comment) {
+        return res.status(404).json({
+          "message": "khong tim thay comment",
+        });
+      }
       comment?.$set({
         __v: undefined
       });
@@ -100,8 +105,8 @@ class CommentController {
     }
     const comment = await Comment.findById(commentId);
     if (!comment) {
-      return res.status(400).json({
-        "message": "sai id",
+      return res.status(404).json({
+        "message": "khong tim thay comment",
       });
     }
     if (comment.peopleId != userId) {

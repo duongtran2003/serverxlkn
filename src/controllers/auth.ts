@@ -13,13 +13,13 @@ class AuthController {
     }
     let user = await People.findOne({ username: username });
     if (!user) {
-      return res.status(400).json({
+      return res.status(401).json({
         "message": "sai thong tin",
       });
     }
     const result = await bcrypt.compare(password, user.password);
     if (!result) {
-      return res.status(400).json({
+      return res.status(401).json({
         "message": "sai thong tin",
       });
     }

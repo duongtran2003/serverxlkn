@@ -143,8 +143,8 @@ class UserController {
       }
       let user = await People.findById(userId);
       if (!user) {
-        return res.status(400).json({
-          "message": "sai user id",
+        return res.status(404).json({
+          "message": "khong tim thay user",
         });
       }
       const result = await bcrypt.compare(oldPassword, user.password);
@@ -162,8 +162,8 @@ class UserController {
     People.findByIdAndUpdate(userId, updatedUser, { new: true })
     .then((updatedUser) => {
       if (!updatedUser) {
-        return res.status(400).json({
-          "message": "sai user id",
+        return res.status(404).json({
+          "message": "khong tim thay user",
         });
       }
       updatedUser?.$set({ password: undefined });

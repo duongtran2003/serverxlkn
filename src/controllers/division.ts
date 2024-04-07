@@ -75,6 +75,11 @@ class DivisionController {
     
     Division.findByIdAndUpdate(divisionId, division, { new: true })
     .then((newDivision) => {
+      if (!newDivision) {
+        return res.status(404).json({
+          "message": "khong tim thay division",
+        });
+      }
       newDivision?.$set({
         __v: undefined
       });
@@ -97,6 +102,24 @@ class DivisionController {
     }
     
     //todo: check if this division has any member
+    const members = await PeopleDivision.find({ divisionId: divisionId });
+    if (members.length) {
+      return res.status(409).json({
+        "message": "Division con thanh vien, khong the xoa",
+      });
+    }
+    
+    Division.findByIdAndDelete(divisionId)
+    .then(() => {
+      return res.status(200).json({
+        "message": "success",
+      });
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        "message": "server error: " + err.message,
+      });
+    });
   }
 }
 
