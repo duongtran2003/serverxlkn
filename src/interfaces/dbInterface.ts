@@ -6,6 +6,7 @@ interface IPeople {
   email: string,
   password: string, 
   isAdmin: boolean,
+  divisions: Schema.Types.ObjectId[],
 }
 
 interface IAction {
@@ -24,6 +25,8 @@ interface IRequest {
   content: string,
   priority: number,
   peopleId: Schema.Types.ObjectId,
+  // divisionId: Schema.Types.ObjectId,
+  categoryId: Schema.Types.ObjectId,
   status: string,
   duplicateRequestId: Schema.Types.ObjectId | null,
   result: string

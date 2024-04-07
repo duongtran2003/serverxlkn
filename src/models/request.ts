@@ -7,11 +7,17 @@ const requestSchema = new Schema<IRequest> ({
   priority: Number,
   peopleId: {
     type: Schema.Types.ObjectId,
+    ref: 'People'
   },
   status: String,
   duplicateRequestId: {
     type: Schema.Types.ObjectId,
+    ref: 'Request',
     default: null,
+  },
+  categoryId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
   },
   result: {
     type: String,
