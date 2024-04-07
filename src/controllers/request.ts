@@ -7,9 +7,9 @@ import { Comment } from "../models/comment";
 
 class RequestController {
   async create(req: Request, res: Response) {
-    const { title, content, priority } = req.body;
+    const { title, content, priority, categoryId } = req.body;
 
-    if (!title || !content || !priority) {
+    if (!title || !content || !priority || !categoryId) {
       return res.status(400).json({
         "message": "thieu thong tin",
       });
@@ -20,6 +20,7 @@ class RequestController {
       content: content,
       priority: priority,
       peopleId: res.locals.claims.userId,
+      categoryId: categoryId,
       status: "Da tao"
     }
 
@@ -54,7 +55,28 @@ class RequestController {
   async index(req: Request, res: Response) {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
-    //later
+   
+    if (!requestId) {
+      const processes = await Process.find({ peopleId: userId });
+      const requests: any = [];
+      for (const process of processes) {
+        const request = await RequestModel.findById(process.requestId).select('-__v');
+        if (request) {
+          requests.push(request);
+        }
+      }
+      return res.status(200).json(requests);
+    }
+    else {
+      const process = await Process.findOne({ peopleId: userId, requestId: requestId });
+      if (!process) {
+        return res.status(403).json({
+          "message": "ban khong du tham quyen",
+        });
+      }
+      const request = await RequestModel.findById(process.requestId).select('-__v');
+      return res.status(200).json(request);
+    }
   }
   
   async update(req: Request, res: Response) {
