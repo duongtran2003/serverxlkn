@@ -106,8 +106,8 @@ class RequestController {
     session.startTransaction();
     try {
       await Process.deleteOne({ requestId: requestId }).session(session);
-      await RequestModel.findByIdAndDelete(requestId).session(session);
       await Comment.deleteMany({ requestId: requestId }).session(session);
+      await RequestModel.findByIdAndDelete(requestId).session(session);
       await session.commitTransaction();
       session.endSession();
       return res.status(200).json({

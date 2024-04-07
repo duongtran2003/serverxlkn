@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import { Validator } from "../helpers/validator";
 import { People } from "../models/people";
 import bcrypt from 'bcrypt';
+import { Division } from "../models/division";
+import { Action } from "../models/action";
+import { PeopleDivision } from "../models/peopleDivision";
 
 class UserController {
   async create(req: Request, res: Response) {
@@ -182,6 +185,45 @@ class UserController {
       })
     }
     People.findByIdAndDelete(userId)
+    .then(() => {
+      return res.status(200).json({
+        "message": "success",
+      });
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        "message": "server error: " + err.message,
+      });
+    });
+  }
+  
+  async assignDivision(req: Request, res: Response) {
+    const { divisionId, actionId, peopleId } = req.body;
+    const division = await Division.findById(divisionId);
+    const action = await Action.findById(actionId);
+    const people = await People.findById(peopleId);
+    if (!division || !action || !people) {
+      return res.status(404).json({
+        "message": "khong tim thay division, action hoac user",
+      });
+    }
+    PeopleDivision.create({ peopleId, actionId, divisionId })
+    .then((created) => {
+      created.$set({
+        __v: undefined
+      });
+      return res.status(201).json(created);
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        "message": "server error: " + err.message,
+      });
+    });
+  }
+  
+  async removeFromDivision(req: Request, res: Response) {
+    const { peopleId, divisionId } = req.body;
+    await PeopleDivision.deleteOne({ peopleId: peopleId, divisionId: divisionId })
     .then(() => {
       return res.status(200).json({
         "message": "success",

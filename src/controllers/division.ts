@@ -49,7 +49,10 @@ class DivisionController {
     const divisionMembers: any = [];
     const members = await PeopleDivision.find({ divisionId: divisionId });
     for (const member of members) {
-      divisionMembers.push(member.peopleId);
+      divisionMembers.push({
+        peopleId: member.peopleId,
+        actionId: member.actionId
+      });
     }
     divisionDetailed.members = divisionMembers;
     return res.status(200).json(divisionDetailed);
