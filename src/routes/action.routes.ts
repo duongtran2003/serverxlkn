@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { isAuthenticated } from "../guards/isAuthenticated";
 import { isAdmin } from "../guards/isAdmin";
-import { ActionController } from "../controllers/action.controller";
+import { ActionController } from "../controllers/Action.controller";
 
 const actionRouter = Router();
 const actionController = new ActionController();

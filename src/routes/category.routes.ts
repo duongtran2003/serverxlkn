@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { isAuthenticated } from "../guards/isAuthenticated";
 import { isAdmin } from "../guards/isAdmin";
-import { CategoryController } from "../controllers/category.controller";
+import { CategoryController } from "../controllers/Category.controller";
 
 const categoryRouter = Router();
 const categoryController = new CategoryController();

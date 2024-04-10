@@ -1,7 +1,8 @@
 import { Router } from "express";
 
 import { isAuthenticated } from "../guards/isAuthenticated";
-import { AuthController } from "../controllers/auth.controller";
+import { AuthController } from "../controllers/Auth.controller";
+
 
 const authRouter = Router();
 const authController = new AuthController();
