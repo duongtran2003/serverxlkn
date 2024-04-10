@@ -1,7 +1,7 @@
 import express from "express";
 import cors from 'cors';
 import { connect as dbConnect } from './config/dbConnect';
-import { router } from "./routes/index";
+import { router } from "./routes/index.routes";
 
 let cookieParser = require('cookie-parser');
 
