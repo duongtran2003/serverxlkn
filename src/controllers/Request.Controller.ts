@@ -5,6 +5,8 @@ import { Action } from "../models/action";
 import { Process } from "../models/process";
 import { Comment } from "../models/comment";
 import { HTTP_STATUS } from "../constants/HttpStatus";
+import { ReqEditHistory } from "../models/reqEditHistory";
+import { Category } from "../models/category";
 
 class RequestController {
   async create(req: Request, res: Response) {
@@ -53,6 +55,17 @@ class RequestController {
     };
   }
 
+  async viewHistory(req: Request, res: Response) {
+    const requestId = req.params.id;
+    if (!requestId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        "message": "thieu thong tin",
+      });
+    }
+    const history = await ReqEditHistory.find({ requestId: requestId });
+    return res.status(HTTP_STATUS.OK).json(history);
+  } 
+
   async index(req: Request, res: Response) {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
@@ -86,7 +99,69 @@ class RequestController {
   }
 
   async update(req: Request, res: Response) {
-    //todo:
+    const requestId = req.params.id;
+   
+    const userId = res.locals.claims.userId;
+
+    if (!requestId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        "message": "thieu thong tin",
+      });
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const request = await RequestModel.findById(requestId);
+      if (!request) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          "message": "khong tim thay request",
+        });
+      }
+      const history = {
+        title: request.title,
+        content: request.content,
+        priority: request.priority,
+        peopleId: request.peopleId,
+        categoryId: request.categoryId,
+        status: request.status,
+        duplicateRequestId: request.duplicateRequestId,
+        result: request.result,
+        editedBy: userId,
+        requestId: request._id,
+      }
+      
+      await ReqEditHistory.create([history], { session: session });
+      const { title, content, categoryId } = req.body;
+      const patched = {
+        title: title || undefined,
+        content: content || undefined,
+        categoryId: undefined,
+      }
+      if (categoryId) {
+        const category = await Category.findById(categoryId);
+        if (!category) {
+          return res.status(HTTP_STATUS.NOT_FOUND).json({
+            "message": "khong tim thay category",
+          });
+        }
+        patched.categoryId = categoryId;
+      }
+      const updatedRequest = await RequestModel.findByIdAndUpdate(requestId, patched, { new: true }).session(session);
+      updatedRequest?.$set({
+        __v: undefined,
+      });
+      await session.commitTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.OK).json(updatedRequest);
+    }
+    catch (err) {
+      await session.abortTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+        "message": "server error",
+      });
+    }
   }
 
   async delete(req: Request, res: Response) {
