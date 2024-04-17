@@ -6,7 +6,6 @@ interface IPeople {
   email: string,
   password: string, 
   isAdmin: boolean,
-  divisions: Schema.Types.ObjectId[],
 }
 
 interface IAction {

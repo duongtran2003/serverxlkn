@@ -10,10 +10,6 @@ const peopleSchema = new Schema<IPeople>({
     type: Boolean,
     default: false
   },
-  divisions: {
-    type: [Schema.Types.ObjectId],
-    ref: 'Division'
-  }
 }, {
   timestamps: true
 });

@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { Action } from "../models/action";
 import { Process } from "../models/process";
 import { Comment } from "../models/comment";
+import { HTTP_STATUS } from "../constants/HttpStatus";
 
 class RequestController {
   async create(req: Request, res: Response) {
@@ -37,7 +38,7 @@ class RequestController {
       }
       const newProcess = (await Process.create([process], { session: session }))[0];
       await session.commitTransaction();
-      session.endSession();
+      await session.endSession();
       newRequest.$set({
         __v: undefined
       });
@@ -45,7 +46,7 @@ class RequestController {
     }
     catch (err) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
       return res.status(500).json({
         "message": "server error" + err,
       });
@@ -114,16 +115,88 @@ class RequestController {
       await Comment.deleteMany({ requestId: requestId }).session(session);
       await RequestModel.findByIdAndDelete(requestId).session(session);
       await session.commitTransaction();
-      session.endSession();
+      await session.endSession();
       return res.status(200).json({
         "message": "success",
       });
     }
     catch (err) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
       return res.status(500).json({
         "message": "server error: " + err,
+      });
+    }
+  }
+  
+  async forward(req: Request, res: Response) {
+    const { peopleId, actionId } = req.body;
+    const userId = res.locals.claims.userId;
+    const requestId = req.params.id;
+    if (!peopleId || !actionId || !requestId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        "message": "thieu thong tin",
+      });
+    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const request = await RequestModel.findById(requestId);
+      const process = await Process.findOne({ peopleId: userId, requestId: requestId });
+      if (!process) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          "message": "khong tim thay process lien quan",
+        });
+      }
+      if (!request) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          "message": "khong tim thay request",
+        });
+      }
+      let action = await Action.findOne({ actionName: "Xem" });
+      if (action) {
+        process.$set({
+          actionId: action._id,
+        });
+      }
+      action = await Action.findById(actionId);
+      if (!action) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          "message": "khong tim thay action",
+        });
+      }
+      if (action.actionName == "Phe duyet") {
+        process.$set({
+          result: "Cho phe duyet",
+        });
+        request.$set({
+          status: "Cho phe duyet"
+        });
+      }
+      else {
+        request.$set({
+          status: action.actionName,
+        });
+      }
+      await process.save({ session: session });
+      await request.save({ session: session });
+      const newProcess = {
+        peopleId: peopleId,
+        actionId: actionId,
+        requestId: requestId,
+      }
+      await Process.create([newProcess], { session: session });
+      await session.commitTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.OK).json({
+        "message": "success",
+      });
+    }
+    catch (err) {
+      await session.abortTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+        "message": "server error",
       });
     }
   }
