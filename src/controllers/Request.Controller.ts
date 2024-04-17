@@ -255,7 +255,56 @@ class RequestController {
   }
 
   async approve(req: Request, res: Response) {
+    const requestId = req.params.id;
+    const userId = res.locals.claims.userId;
+    
+    if (!requestId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        "message": "thieu thong tin",
+      });
+    }
 
+    const request = await RequestModel.findById(requestId);
+    if (!request) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        "message": "khong tim thay request",
+      });
+    }
+    
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const process = await Process.findOne({ peopleId: userId, requestId: requestId });
+      if (!process) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          "message": "khong tim thay process lien quan",
+        });
+      }
+      const action = await Action.findOne({ actionName: "Xem" });
+      if (action) {
+        process.$set({
+          actionId: action._id,
+        });
+      }
+      request.$set({
+        status: "Da phe duyet",
+      });
+      await process.save({ session: session });
+      await request.save({ session: session });
+      await Process.updateMany({ requestId: requestId }, { result: "Da xu li" }).session(session);
+      await session.commitTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.OK).json({
+        "message": "success",
+      });
+    }
+    catch (err) {
+      await session.abortTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+        "message": "server error",
+      });
+    }
   }
 }
 
