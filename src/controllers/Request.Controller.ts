@@ -56,7 +56,7 @@ class RequestController {
   async index(req: Request, res: Response) {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
-   
+
     if (!requestId) {
       const processes = await Process.find({ peopleId: userId });
       const requests: any = [];
@@ -84,11 +84,11 @@ class RequestController {
       return res.status(200).json(request);
     }
   }
-  
+
   async update(req: Request, res: Response) {
     //todo:
-  } 
-  
+  }
+
   async delete(req: Request, res: Response) {
     const userId = res.locals.claims.userId;
     const requestId = req.params.id;
@@ -128,7 +128,7 @@ class RequestController {
       });
     }
   }
-  
+
   async forward(req: Request, res: Response) {
     const { peopleId, actionId } = req.body;
     const userId = res.locals.claims.userId;
@@ -199,6 +199,63 @@ class RequestController {
         "message": "server error",
       });
     }
+  }
+
+  async disapprove(req: Request, res: Response) {
+    const requestId = req.params.id;
+    const userId = res.locals.claims.userId;
+
+    if (!requestId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        "message": "thieu thong tin",
+      });
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const prevProcess = await Process.findOne({ requestId: requestId, status: "Cho phe duyet" });
+      await Process.findOneAndDelete({ requestId: requestId, peopleId: userId }).session(session);
+      const request = await RequestModel.findById(requestId);
+      if (!prevProcess) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          "message": "khong tim thay process lien quan",
+        });
+      }
+      if (!request) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          "message": "khong tim thay request",
+        });
+      }
+      const action = await Action.findOne({ actionName: "Cap nhat ket qua" });
+      if (action) {
+        prevProcess.$set({
+          actionId: action._id,
+          result: "Dang xu li",
+        });
+        request.$set({
+          status: action.actionName,
+        });
+      }
+      await request.save({ session: session });
+      await prevProcess.save({ session: session });
+      await session.commitTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.OK).json({
+        "message": "success",
+      });
+    }
+    catch (err) {
+      await session.abortTransaction();
+      await session.endSession();
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+        "message": "server error",
+      });
+    }
+  }
+
+  async approve(req: Request, res: Response) {
+
   }
 }
 
