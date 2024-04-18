@@ -74,10 +74,10 @@ class UserController {
     let users: any = [];
 
     if (options.length) {
-      users = await People.find({ $or: options }, { password: 0, __v: 0 });
+      users = await People.find({ $or: options }, { password: 0, __v: 0, isAdmin: 0 });
     }
     else {
-      users = await People.find({}, { password: 0, __v: 0 });
+      users = await People.find({}, { password: 0, __v: 0, isAdmin: 0 });
     }
     return res.status(200).json(users);
   }
@@ -166,8 +166,10 @@ class UserController {
           "message": "khong tim thay user",
         });
       }
-      updatedUser?.$set({ password: undefined });
-      updatedUser?.$set({ __v: undefined });
+      updatedUser?.$set({ 
+        password: undefined,
+        __v: undefined,
+      });
       return res.status(200).json(updatedUser);
     })
     .catch((err) => {
