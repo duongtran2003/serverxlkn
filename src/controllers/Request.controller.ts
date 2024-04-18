@@ -64,20 +64,115 @@ class RequestController {
     }
     const history = await ReqEditHistory.find({ requestId: requestId });
     return res.status(HTTP_STATUS.OK).json(history);
-  } 
+  }
 
   async index(req: Request, res: Response) {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
 
+    const aggregationOptions = [
+      {
+        $lookup: {
+          from: 'peoples',
+          localField: 'peopleId',
+          foreignField: '_id',
+          as: 'people',
+        }
+      },
+      {
+        $unwind: "$people",
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryId',
+          foreignField: "_id",
+          as: 'category'
+        }
+      },
+      {
+        $unwind: "$category"
+      },
+      {
+        $lookup: {
+          from: 'processes',
+          localField: '_id',
+          foreignField: 'requestId',
+          pipeline: [
+            {
+              $lookup: {
+                from: 'actions',
+                localField: 'actionId',
+                foreignField: '_id',
+                as: 'action',
+              }
+            },
+            {
+              $unwind: "$action"
+            },
+            {
+              $lookup: {
+                from: 'peoples',
+                localField: 'peopleId',
+                foreignField: '_id',
+                as: 'people',
+              }
+            },
+            {
+              $unwind: "$people"
+            }
+          ],
+          as: 'process',
+        }
+      },
+      {
+        $unwind: "$process"
+      },
+      {
+        $project: {
+          "peopleId": 0,
+          "categoryId": 0,
+          "__v": 0,
+          "people.password": 0,
+          "people.isAdmin": 0,
+          "people.updatedAt": 0,
+          "people.createdAt": 0,
+          "people.__v": 0,
+          "category.updatedAt": 0,
+          "category.createdAt": 0,
+          "category.__v": 0,
+          "process.peopleId": 0,
+          "process.requestId": 0,
+          "process.actionId": 0,
+          "process.__v": 0,
+          "process.action.id": 0,
+          "process.action.createdAt": 0,
+          "process.action.updatedAt": 0,
+          "process.action.__v": 0,
+          "process.people.id": 0,
+          "process.people.createdAt": 0,
+          "process.people.updatedAt": 0,
+          "process.people.__v": 0,
+          "process.people.password": 0,
+          "process.people.isAdmin": 0,
+        }
+      }
+    ];
     if (!requestId) {
       const processes = await Process.find({ peopleId: userId });
       const requests: any = [];
       for (const process of processes) {
-        const request = await RequestModel.findById(process.requestId).select('-__v');
-        if (request) {
-          requests.push(request);
-        }
+        const request = await RequestModel.aggregate(
+          [
+            {
+              $match: {
+                _id: process.requestId,
+              }
+            },
+            ...aggregationOptions
+          ]
+        );
+        requests.push(request[0]);
       }
       return res.status(200).json(requests);
     }
@@ -88,19 +183,28 @@ class RequestController {
           "message": "ban khong du tham quyen",
         });
       }
-      const request = await RequestModel.findById(process.requestId).select('-__v');
-      if (!request) {
+      const request = await RequestModel.aggregate(
+        [
+          {
+            $match: {
+              _id: process.requestId,
+            }
+          },
+          ...aggregationOptions
+        ]
+      );
+      if (!request.length) {
         return res.status(404).json({
           "message": "khong tim thay request",
         });
       }
-      return res.status(200).json(request);
+      return res.status(200).json(request[0]);
     }
   }
 
   async update(req: Request, res: Response) {
     const requestId = req.params.id;
-   
+
     const userId = res.locals.claims.userId;
 
     if (!requestId) {
@@ -130,7 +234,7 @@ class RequestController {
         editedBy: userId,
         requestId: request._id,
       }
-      
+
       await ReqEditHistory.create([history], { session: session });
       const { title, content, categoryId } = req.body;
       const patched = {
@@ -332,7 +436,7 @@ class RequestController {
   async approve(req: Request, res: Response) {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
-    
+
     if (!requestId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         "message": "thieu thong tin",
@@ -345,7 +449,7 @@ class RequestController {
         "message": "khong tim thay request",
       });
     }
-    
+
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
