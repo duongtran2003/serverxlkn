@@ -62,7 +62,68 @@ class RequestController {
         "message": "thieu thong tin",
       });
     }
-    const history = await ReqEditHistory.find({ requestId: requestId });
+    const aggregationOptions = [
+      {
+        $match: {
+          requestId: new mongoose.Types.ObjectId(requestId),
+        }
+      },
+      {
+        $lookup: {
+          from: 'peoples',
+          localField: 'peopleId',
+          foreignField: '_id',
+          as: 'people',
+        }
+      },
+      {
+        $unwind: "$people",
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryId',
+          foreignField: "_id",
+          as: 'category'
+        }
+      },
+      {
+        $unwind: "$category"
+      },
+      {
+        $lookup: {
+          from: 'peoples',
+          localField: 'editedBy',
+          foreignField: '_id',
+          as: 'editedBy',
+        }
+      },
+      {
+        $unwind: "$editedBy",
+      },
+      {
+        $project: {
+          "peopleId": 0,
+          "requestId": 0,
+          "categoryId": 0,
+          "__v": 0,
+          "people.password": 0,
+          "people.isAdmin": 0,
+          "people.updatedAt": 0,
+          "people.createdAt": 0,
+          "people.__v": 0,
+          "category.updatedAt": 0,
+          "category.createdAt": 0,
+          "category.__v": 0,
+          "editedBy.password": 0,
+          "editedBy.isAdmin": 0,
+          "editedBy.createdAt": 0,
+          "editedBy.updatedAt": 0,
+          "editedBy.__v": 0,
+        }
+      }
+    ];
+    const history = await ReqEditHistory.aggregate(aggregationOptions);
     return res.status(HTTP_STATUS.OK).json(history);
   }
 
