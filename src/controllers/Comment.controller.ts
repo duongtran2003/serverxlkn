@@ -1,6 +1,7 @@
 import { Request, Response, request } from "express";
 import { Process } from "../models/process";
 import { Comment } from "../models/comment";
+import mongoose from "mongoose";
 
 class CommentController {
   async create(req: Request, res: Response) {
@@ -40,7 +41,7 @@ class CommentController {
   }
   
   async index(req: Request, res: Response) {
-    const { requestId } = req.query;
+    const requestId = req.query.requestId;
 
     if (!requestId) {
       return res.status(400).json({
@@ -48,7 +49,37 @@ class CommentController {
       });
     } 
 
-    const comments = await Comment.find({ requestId: requestId }).select("-__v");
+    const comments = await Comment.aggregate([
+      {
+        $match: {
+          requestId: new mongoose.Types.ObjectId(requestId.toString()),
+        }
+      },
+      {
+        $lookup: {
+          from: "peoples",
+          localField: "peopleId",
+          foreignField: "_id",
+          as: "people",
+        }
+      },
+      {
+        $unwind: "$people",
+      },
+      {
+        $project: {
+          "peopleId": 0,
+          "requestId": 0,
+          "__v": 0,
+          "people.password": 0,
+          "people.isAdmin": 0,
+          "people.createdAt": 0,
+          "people.updatedAt": 0,
+          "people.__v": 0,
+        }
+      }
+    ]) 
+
     return res.status(200).json(comments);
   }
   
