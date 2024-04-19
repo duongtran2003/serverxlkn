@@ -128,7 +128,7 @@ class CommentController {
   
   async delete(req: Request, res: Response) {
     const userId = res.locals.claims.userId;
-    const commentId = req.params.commentId;
+    const commentId = req.params.id;
     if (!commentId) {
       return res.status(400).json({
         "message": "thieu thong tin"
