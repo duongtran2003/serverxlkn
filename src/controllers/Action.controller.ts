@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { Action } from "../models/action";
 
 class ActionController {
-  async create(req: Request, res: Response) {
+  async create(req: Request, res: Response,next: NextFunction) {
     const actionName = req.body.actionName;
     await Action.create({
       actionName: actionName,
