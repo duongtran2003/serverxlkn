@@ -31,7 +31,7 @@ class AuthController {
 
     if (!process.env.JWTSECRET) {
       return res.json({
-        status: HTTP_STATUS.INTERNAL_SERVER_ERRO,
+        status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
         message: AUTH_MESSAGES.KHONG_CO_JWT_SECRET,
       });
     }
