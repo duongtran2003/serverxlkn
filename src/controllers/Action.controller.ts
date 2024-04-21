@@ -20,7 +20,11 @@ class ActionController {
     if (!actionId) {
       // Get all actions
       const actions = await Action.find({}).select("-__v");
-      return res.status(200).json(actions);
+      return res.json({
+        status: HTTP_STATUS.OK,
+        message: ACTION_MESSAGES.LAY_RA_TOAN_BO_ACTION_THANH_CONG,
+        data: actions
+      });
     }
     const action = await Action.findById(actionId).select("-__v");
     if (!action) {
@@ -31,7 +35,7 @@ class ActionController {
     }
     return res.json({
       status: HTTP_STATUS.OK,
-      message: ACTION_MESSAGES.LAY_RA_TOAN_BO_ACTION_THANH_CONG,
+      message: ACTION_MESSAGES.LAY_RA_ACTION_THEO_ID_THANH_CONG,
       data: action
     });
   }
