@@ -110,7 +110,7 @@ class CategoryController {
     const requestsWithCategory = await RequestModel.find({ categoryId: categoryId });
     if (requestsWithCategory.length) {
       return res.status(409).json({
-        "message": "category nam trong nhieu yeu cau",
+        message: CATEGORY_MESSAGES.CATEGORY_NAM_TRONG_NHIEU_YEU_CAU,
       });
     }
 

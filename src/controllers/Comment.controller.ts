@@ -2,21 +2,25 @@ import { Request, Response, request } from "express";
 import { Process } from "../models/process";
 import { Comment } from "../models/comment";
 import mongoose from "mongoose";
+import { COMMENT_MESSAGES } from "../constants/messages";
+import { HTTP_STATUS } from "../constants/HttpStatus";
 
 class CommentController {
   async create(req: Request, res: Response) {
     const userId = res.locals.claims.userId;
     const { requestId, comment } = req.body;
     if (!requestId || !comment) {
-      return res.status(400).json({
-        "message": "thieu thong tin"
+      return res.json({
+        status: HTTP_STATUS.OK,
+        message: COMMENT_MESSAGES.THIEU_THONG_TIN,
       });
     }
     
     const process = await Process.findOne({ requestId: requestId, peopleId: userId });
     if (!process) {
-      return res.status(403).json({
-        "message": "ban khong du tham quyen",
+      return res.json({
+        status: HTTP_STATUS.FORBIDDEN,
+        message: COMMENT_MESSAGES.BAN_KHONG_DU_THAM_QUYEN,
       });
     }
     
@@ -31,7 +35,11 @@ class CommentController {
       comment.$set({
         __v: undefined
       });
-      return res.status(201).json(comment);
+      return res.json({
+        status: HTTP_STATUS.CREATED,
+        message: COMMENT_MESSAGES.TAO_COMMENT_THANH_CONG,
+        data: comment,
+      });
     })
     .catch((err) => {
       return res.status(500).json({
@@ -44,8 +52,9 @@ class CommentController {
     const requestId = req.query.requestId;
 
     if (!requestId) {
-      return res.status(400).json({
-        "message": "thieu thong tin",
+      return res.json({
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: COMMENT_MESSAGES.THIEU_THONG_TIN,
       });
     } 
 
@@ -80,7 +89,11 @@ class CommentController {
       }
     ]) 
 
-    return res.status(200).json(comments);
+    return res.json({
+      status: HTTP_STATUS.OK,
+      message: COMMENT_MESSAGES.LAY_RA_TOAN_BO_COMMENT_THANH_CONG,
+      data: comments,
+    });
   }
   
   async update(req: Request, res: Response) {
@@ -89,29 +102,33 @@ class CommentController {
       comment: req.body.comment || undefined,
     } 
     if (!commentId) {
-      return res.status(400).json({
-        "message": "thieu thong tin",
+      return res.json({
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: COMMENT_MESSAGES.THIEU_THONG_TIN,
       });
     }
     
     const userId = res.locals.claims.userId;
     const comment = await Comment.findById(commentId);
     if (!comment) {
-      return res.status(404).json({
-        "message": "khong tim thay comment",
+      return res.json({
+        status: HTTP_STATUS.NOT_FOUND,
+        message: COMMENT_MESSAGES.KHONG_TIM_THAY_COMMENT,
       });
     }
     if (comment.peopleId != userId) {
-      return res.status(403).json({
-        "message": "ban khong du tham quyen",
+      return res.json({
+        status: HTTP_STATUS.FORBIDDEN,
+        message: COMMENT_MESSAGES.BAN_KHONG_DU_THAM_QUYEN,
       });
     }
     
     Comment.findByIdAndUpdate(commentId, newComment, { new: true })
     .then((comment) => {
       if (!comment) {
-        return res.status(404).json({
-          "message": "khong tim thay comment",
+        return res.json({
+          status: HTTP_STATUS.NOT_FOUND,
+          message: COMMENT_MESSAGES.KHONG_TIM_THAY_COMMENT,
         });
       }
       comment?.$set({
@@ -130,26 +147,30 @@ class CommentController {
     const userId = res.locals.claims.userId;
     const commentId = req.params.id;
     if (!commentId) {
-      return res.status(400).json({
-        "message": "thieu thong tin"
+      return res.json({
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: COMMENT_MESSAGES.THIEU_THONG_TIN,
       });
     }
     const comment = await Comment.findById(commentId);
     if (!comment) {
-      return res.status(404).json({
-        "message": "khong tim thay comment",
+      return res.json({
+        status: HTTP_STATUS.NOT_FOUND,
+        message: COMMENT_MESSAGES.KHONG_TIM_THAY_COMMENT,
       });
     }
     if (comment.peopleId != userId) {
-      return res.status(403).json({
-        "message": "ban khong du tham quyen",
+      return res.json({
+        status: HTTP_STATUS.FORBIDDEN,
+        message: COMMENT_MESSAGES.BAN_KHONG_DU_THAM_QUYEN,
       });
     }
     
     Comment.findByIdAndDelete(commentId)
     .then(() => {
-      return res.status(200).json({
-        "message": "success",
+      return res.json({
+        status: HTTP_STATUS.OK,
+        message: COMMENT_MESSAGES.DELETE_COMMENT_THANH_CONG,
       });
     })
     .catch((err) => {

@@ -6,7 +6,7 @@
       "description": "API documentation for the actions, auth, categories, comments, requests, and users endpoints.",
       "version": "1.0.0",
     },
-  "servers": [{ "url": "http://localhost:8000" }],
+  "servers": [{ "url": "https://kks8ph-8000.csb.app" }],
   "paths":
     {
       "/actions":
@@ -53,8 +53,8 @@
                               "type": "object",
                               "properties":
                                 {
-                                  "username": { "type": "string" },
-                                  "password": { "type": "string" },
+                                  "username": { "type": "username1" },
+                                  "password": { "type": "password1" },
                                 },
                             },
                         },
