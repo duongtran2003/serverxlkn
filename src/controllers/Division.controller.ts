@@ -1,14 +1,17 @@
 import { Request, Response } from "express";
 import { Division } from "../models/division";
 import { PeopleDivision } from "../models/peopleDivision";
+import { HTTP_STATUS } from "../constants/HttpStatus";
+import { DIVISION_MESSAGES } from "../constants/messages";
 
 class DivisionController {
   async create(req: Request, res: Response) {
     const { divisionName, description } = req.body;
 
     if (!divisionName || !description) {
-      return res.status(400).json({
-        "message": "thieu thong tin",
+      return res.json({
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: DIVISION_MESSAGES.THIEU_THONG_TIN
       });
     }
     
@@ -22,7 +25,11 @@ class DivisionController {
       division.$set({
         __v: undefined
       });
-      return res.status(201).json(division);
+      return res.json({
+        status: HTTP_STATUS.CREATED,
+        message: DIVISION_MESSAGES.TAO_DIVISION_THANH_CONG,
+        data: division,
+      });
     })
     .catch((err) => {
       return res.status(500).json({
@@ -36,13 +43,18 @@ class DivisionController {
 
     if (!divisionId) {
       const divisions = await Division.find({}).select("-__v");
-      return res.status(200).json(divisions);
+      return res.json({
+        status: HTTP_STATUS.OK,
+        message: DIVISION_MESSAGES.LAY_RA_TOAN_BO_DIVISION_THANH_CONG,
+        data: divisions
+      })
     }
     
     const division = await Division.findById(divisionId).select("-__v");
     if (!division) {
-      return res.status(404).json({
-        "message": "khong tim thay division",
+      return res.json({
+        status: HTTP_STATUS.NOT_FOUND,
+        message: DIVISION_MESSAGES.KHONG_TIM_THAY_DIVISION,
       });
     }
     const divisionDetailed: any = division.toObject();
@@ -55,15 +67,22 @@ class DivisionController {
       });
     }
     divisionDetailed.members = divisionMembers;
-    return res.status(200).json(divisionDetailed);
+    return res.json(
+      {
+        status: HTTP_STATUS.OK,
+        message: DIVISION_MESSAGES.LAY_RA_DIVISION_THEO_ID_THANH_CONG,
+        data: divisionDetailed
+      }
+    );
   }
   
   async update(req: Request, res: Response) {
     const divisionId = req.params.id;
 
     if (!divisionId) {
-      return res.status(400).json({
-        "message": "thieu thong tin",
+      return res.json({
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: DIVISION_MESSAGES.THIEU_THONG_TIN,
       });
     }
     
@@ -76,14 +95,20 @@ class DivisionController {
     Division.findByIdAndUpdate(divisionId, division, { new: true })
     .then((newDivision) => {
       if (!newDivision) {
-        return res.status(404).json({
-          "message": "khong tim thay division",
+        return res.json({
+          status: HTTP_STATUS.NOT_FOUND,
+          message: DIVISION_MESSAGES.KHONG_TIM_THAY_DIVISION,
         });
       }
       newDivision?.$set({
         __v: undefined
       });
-      return res.status(200).json(newDivision);
+      return res.json({
+        status: HTTP_STATUS.OK,
+        message: DIVISION_MESSAGES.UPDATE_DIVISION_THANH_CONG,
+        data: newDivision
+      
+      });
     })
     .catch((err) => {
       return res.status(500).json({
@@ -96,22 +121,25 @@ class DivisionController {
     const divisionId = req.params.id;
 
     if (!divisionId) {
-      return res.status(400).json({
-        "message": "thieu thong tin",
+      return res.json({
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: DIVISION_MESSAGES.THIEU_THONG_TIN,
       });
     }
     
     const members = await PeopleDivision.find({ divisionId: divisionId });
     if (members.length) {
-      return res.status(409).json({
-        "message": "Division con thanh vien, khong the xoa",
+      return res.json({
+        status: HTTP_STATUS.BAD_REQUEST,
+        message: DIVISION_MESSAGES.DIVISION_CON_THANH_VIEN,
       });
     }
     
     Division.findByIdAndDelete(divisionId)
     .then(() => {
-      return res.status(200).json({
-        "message": "success",
+      return res.json({
+        status: HTTP_STATUS.OK,
+        message: DIVISION_MESSAGES.DELETE_DIVISION_THANH_CONG,
       });
     })
     .catch((err) => {

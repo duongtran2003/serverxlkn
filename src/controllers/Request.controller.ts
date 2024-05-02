@@ -324,7 +324,7 @@ class RequestController {
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error",
       });
     }
@@ -436,7 +436,7 @@ class RequestController {
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error",
       });
     }
@@ -489,7 +489,7 @@ class RequestController {
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error",
       });
     }
@@ -542,7 +542,7 @@ class RequestController {
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERRO).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error",
       });
     }
