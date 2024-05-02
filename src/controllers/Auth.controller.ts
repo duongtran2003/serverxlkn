@@ -36,6 +36,7 @@ class AuthController {
     res.cookie("jwt", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
+      sameSite: "none",
     });
     user.$set({ password: undefined });
     user.$set({ __v: undefined });
