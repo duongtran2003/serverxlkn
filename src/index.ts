@@ -16,9 +16,7 @@ dbConnect();
 app.use(cookieParser());
 app.use(cors({
   credentials: true,
-  // origin: process.env.FRONTEND || "http://localhost:4200",
-  //Tam thoi de public
-  origin: "*"
+  origin: process.env.FRONTEND || "http://localhost:3001",
 }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(express.json());
