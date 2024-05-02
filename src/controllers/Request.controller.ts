@@ -297,11 +297,12 @@ class RequestController {
       }
 
       await ReqEditHistory.create([history], { session: session });
-      const { title, content, categoryId } = req.body;
+      const { title, content, categoryId, result } = req.body;
       const patched = {
         title: title || undefined,
         content: content || undefined,
         categoryId: undefined,
+        result: result || undefined,
       }
       if (categoryId) {
         const category = await Category.findById(categoryId);
