@@ -37,6 +37,7 @@ class AuthController {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
       sameSite: "none",
+      secure: true,
     });
     user.$set({ password: undefined });
     user.$set({ __v: undefined });
@@ -51,6 +52,7 @@ class AuthController {
       httpOnly: true,
       maxAge: 0,
       sameSite: "none",
+      secure: true,
     });
     return res.status(HTTP_STATUS.OK).json({
       message: AUTH_MESSAGES.LOGOUT_THANH_CONG,
