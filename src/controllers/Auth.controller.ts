@@ -50,6 +50,7 @@ class AuthController {
     res.cookie("jwt", "", {
       httpOnly: true,
       maxAge: 0,
+      sameSite: "none",
     });
     return res.status(HTTP_STATUS.OK).json({
       message: AUTH_MESSAGES.LOGOUT_THANH_CONG,
