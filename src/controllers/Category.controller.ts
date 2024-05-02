@@ -8,8 +8,7 @@ class CategoryController {
   async create(req: Request, res: Response) {
     const description = req.body.description;
     if (!description) {
-      return res.json({
-        status: HTTP_STATUS.BAD_REQUEST,
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: CATEGORY_MESSAGES.THIEU_THONG_TIN,
       });
     }
@@ -21,15 +20,13 @@ class CategoryController {
         newCategory.$set({
           __v: undefined,
         })
-        return res.json({
-          status: HTTP_STATUS.OK,
+        return res.status(HTTP_STATUS.OK).json({
           message: CATEGORY_MESSAGES.TAO_CATEGORY_THANH_CONG,
           data: newCategory,
         });
       })
       .catch((err) => {
-        return res.json({
-          status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           message: "server error: " + err.message,
         });
       });
@@ -39,21 +36,18 @@ class CategoryController {
     const categoryId = req.params.id;
     if (!categoryId) {
       const categories = await Category.find({}).select("-__v");
-      return res.json({
-        status: HTTP_STATUS.OK,
+      return res.status(HTTP_STATUS.OK).json({
         message: CATEGORY_MESSAGES.LAY_RA_TOAN_BO_CATEGORY_THANH_CONG,
         data: categories,
       });
     }
     const category = await Category.findById(categoryId).select("-__v");
     if (!category) {
-      return res.json({
-        status: HTTP_STATUS.NOT_FOUND,
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         message: CATEGORY_MESSAGES.KHONG_TIM_THAY_CATEGORY,
       });
     }
-    return res.json({
-      status: HTTP_STATUS.OK,
+    return res.status(HTTP_STATUS.OK).json({
       message: CATEGORY_MESSAGES.LAY_RA_CATEGORY_THEO_ID_THANH_CONG,
       data: category,
     });
@@ -63,8 +57,7 @@ class CategoryController {
     const categoryId = req.params.id;
 
     if (!categoryId) {
-      return res.json({
-        status: HTTP_STATUS.BAD_REQUEST,
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: CATEGORY_MESSAGES.THIEU_THONG_TIN,
       });
     }
@@ -76,23 +69,20 @@ class CategoryController {
     Category.findByIdAndUpdate(categoryId, category, { new: true })
       .then((updated) => {
         if (!updated) {
-          return res.json({
-            status: HTTP_STATUS.NOT_FOUND,
+          return res.status(HTTP_STATUS.NOT_FOUND).json({
             message: CATEGORY_MESSAGES.KHONG_TIM_THAY_CATEGORY,
           });
         }
         updated?.$set({
           __v: undefined
         })
-        return res.json({
-          status: HTTP_STATUS.OK,
+        return res.status(HTTP_STATUS.OK).json({
           message: CATEGORY_MESSAGES.UPDATE_CATEGORY_THANH_CONG,
           data: updated,
         });
       })
       .catch((err) => {
-        return res.json({
-          status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           message: "server error: " + err.message,
         })
       });
@@ -101,29 +91,26 @@ class CategoryController {
   async delete(req: Request, res: Response) {
     const categoryId = req.params.id;
     if (!categoryId) {
-      return res.json({
-        status: HTTP_STATUS.BAD_REQUEST,
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: CATEGORY_MESSAGES.THIEU_THONG_TIN,
       });
     }
 
     const requestsWithCategory = await RequestModel.find({ categoryId: categoryId });
     if (requestsWithCategory.length) {
-      return res.status(409).json({
+      return res.status(HTTP_STATUS.CONFLICT).json({
         message: CATEGORY_MESSAGES.CATEGORY_NAM_TRONG_NHIEU_YEU_CAU,
       });
     }
 
     Category.findByIdAndDelete(categoryId)
       .then(() => {
-        return res.json({
-          status: HTTP_STATUS.OK,
+        return res.status(HTTP_STATUS.OK).json({
           message: CATEGORY_MESSAGES.DELETE_CATEGORY_THANH_CONG,
         });
       })
       .catch((err) => {
-        return res.json({
-          status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           message: "server error: " + err.message,
         });
       });

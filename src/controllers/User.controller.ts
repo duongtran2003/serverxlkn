@@ -5,24 +5,25 @@ import bcrypt from 'bcrypt';
 import { Division } from "../models/division";
 import { Action } from "../models/action";
 import { PeopleDivision } from "../models/peopleDivision";
+import { HTTP_STATUS } from "../constants/HttpStatus";
 
 class UserController {
   async create(req: Request, res: Response) {
     const { fullname, username, email, password } = req.body;
     if (!fullname || !username || !email || !password) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         "message": "thieu thong tin",
       });
     }
     const validator = new Validator();
     if (!validator.isEmail(email) || !validator.isUsername(username) || !validator.isPassword(password)) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         "message": "thong tin khong hop le",
       });
     }
     let user = await People.findOne({ username: username });
     if (user) {
-      return res.status(409).json({
+      return res.status(HTTP_STATUS.CONFLICT).json({
         "message": "username da ton tai",
       });
     }
@@ -42,10 +43,13 @@ class UserController {
     .then((user) => {
       user.$set({ password: undefined });
       user.$set({ __v: undefined });
-      return res.status(201).json(user);
+      return res.status(HTTP_STATUS.CREATED).json({
+        data: user,
+        message: "Tao user moi thanh cong",
+      });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     })
@@ -79,7 +83,10 @@ class UserController {
     else {
       users = await People.find({}, { password: 0, __v: 0, isAdmin: 0 });
     }
-    return res.status(200).json(users);
+    return res.status(HTTP_STATUS.OK).json({
+      data: users,
+      message: "Lay ra toan bo users thanh cong",
+    });
   }
   
   async update(req: Request, res: Response) {
@@ -87,7 +94,7 @@ class UserController {
     const { username, fullname, email, password, oldPassword } = req.body;
     const userId = req.params.id;
     if (!userId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         "message": "thieu user id",
       })
     }
@@ -104,13 +111,13 @@ class UserController {
     }
     if (username) {
       if (!validator.isUsername(username)) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           "message": "thong tin khong hop le",
         });
       }
       const user = await People.findOne({ username: username });
       if (user) {
-        return res.status(409).json({
+        return res.status(HTTP_STATUS.CONFLICT).json({
           "message": "username da ton tai",
         });
       }
@@ -119,7 +126,7 @@ class UserController {
 
     if (email) {
       if (!validator.isEmail(email)) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           "message": "thong tin khong hop le",
         });
       }      
@@ -132,18 +139,18 @@ class UserController {
     
     if (password) {
       if (!oldPassword) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           "message": "thieu mat khau cu",
         });
       }
       if (!validator.isPassword(password)) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           "message": "thong tin khong hop le",
         });
       }
       let user = await People.findById(userId);
       if (!user) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           "message": "khong tim thay user",
         });
       }
@@ -154,7 +161,7 @@ class UserController {
         updatedUser.password = hashedPassword;
       }
       else {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           "message": "mat khau khong trung khop",
         });
       }
@@ -162,7 +169,7 @@ class UserController {
     People.findByIdAndUpdate(userId, updatedUser, { new: true })
     .then((updatedUser) => {
       if (!updatedUser) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           "message": "khong tim thay user",
         });
       }
@@ -170,10 +177,13 @@ class UserController {
         password: undefined,
         __v: undefined,
       });
-      return res.status(200).json(updatedUser);
+      return res.status(HTTP_STATUS.OK).json({
+        data: updatedUser,
+        message: "Cap nhat thong tin user thanh cong"
+      });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     });
@@ -182,18 +192,18 @@ class UserController {
   async delete(req: Request, res: Response) {
     const userId = req.params.id;
     if (!userId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         "message": "thieu thong tin",
       })
     }
     People.findByIdAndDelete(userId)
     .then(() => {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         "message": "success",
       });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     });
@@ -205,7 +215,7 @@ class UserController {
     const action = await Action.findById(actionId);
     const people = await People.findById(peopleId);
     if (!division || !action || !people) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         "message": "khong tim thay division, action hoac user",
       });
     }
@@ -214,10 +224,13 @@ class UserController {
       created.$set({
         __v: undefined
       });
-      return res.status(201).json(created);
+      return res.status(HTTP_STATUS.CREATED).json({
+        data: created,
+        message: "Gan division thanh cong"
+      });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     });
@@ -227,12 +240,12 @@ class UserController {
     const { peopleId, divisionId } = req.body;
     await PeopleDivision.deleteOne({ peopleId: peopleId, divisionId: divisionId })
     .then(() => {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         "message": "success",
       });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     });

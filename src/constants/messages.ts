@@ -12,6 +12,7 @@ export const AUTH_MESSAGES = {
     "Sai thông tin tài khoản hoặc mật khẩu",
   KHONG_CO_JWT_SECRET: "Không có JWT secret",
   LOGOUT_THANH_CONG: "Logout thành công",
+  LOGIN_THANH_CONG: "Đăng nhập thành công",
 };
 export const CATEGORY_MESSAGES = {
   THIEU_THONG_TIN: "Thiếu thông tin",

@@ -9,8 +9,7 @@ class DivisionController {
     const { divisionName, description } = req.body;
 
     if (!divisionName || !description) {
-      return res.json({
-        status: HTTP_STATUS.BAD_REQUEST,
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: DIVISION_MESSAGES.THIEU_THONG_TIN
       });
     }
@@ -25,14 +24,13 @@ class DivisionController {
       division.$set({
         __v: undefined
       });
-      return res.json({
-        status: HTTP_STATUS.CREATED,
+      return res.status(HTTP_STATUS.CREATED).json({
         message: DIVISION_MESSAGES.TAO_DIVISION_THANH_CONG,
         data: division,
       });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     });
@@ -43,8 +41,7 @@ class DivisionController {
 
     if (!divisionId) {
       const divisions = await Division.find({}).select("-__v");
-      return res.json({
-        status: HTTP_STATUS.OK,
+      return res.status(HTTP_STATUS.OK).json({
         message: DIVISION_MESSAGES.LAY_RA_TOAN_BO_DIVISION_THANH_CONG,
         data: divisions
       })
@@ -52,8 +49,7 @@ class DivisionController {
     
     const division = await Division.findById(divisionId).select("-__v");
     if (!division) {
-      return res.json({
-        status: HTTP_STATUS.NOT_FOUND,
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         message: DIVISION_MESSAGES.KHONG_TIM_THAY_DIVISION,
       });
     }
@@ -67,9 +63,8 @@ class DivisionController {
       });
     }
     divisionDetailed.members = divisionMembers;
-    return res.json(
+    return res.status(HTTP_STATUS.OK).json(
       {
-        status: HTTP_STATUS.OK,
         message: DIVISION_MESSAGES.LAY_RA_DIVISION_THEO_ID_THANH_CONG,
         data: divisionDetailed
       }
@@ -80,8 +75,7 @@ class DivisionController {
     const divisionId = req.params.id;
 
     if (!divisionId) {
-      return res.json({
-        status: HTTP_STATUS.BAD_REQUEST,
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: DIVISION_MESSAGES.THIEU_THONG_TIN,
       });
     }
@@ -95,23 +89,20 @@ class DivisionController {
     Division.findByIdAndUpdate(divisionId, division, { new: true })
     .then((newDivision) => {
       if (!newDivision) {
-        return res.json({
-          status: HTTP_STATUS.NOT_FOUND,
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           message: DIVISION_MESSAGES.KHONG_TIM_THAY_DIVISION,
         });
       }
       newDivision?.$set({
         __v: undefined
       });
-      return res.json({
-        status: HTTP_STATUS.OK,
+      return res.status(HTTP_STATUS.OK).json({
         message: DIVISION_MESSAGES.UPDATE_DIVISION_THANH_CONG,
         data: newDivision
-      
       });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     });
@@ -121,29 +112,26 @@ class DivisionController {
     const divisionId = req.params.id;
 
     if (!divisionId) {
-      return res.json({
-        status: HTTP_STATUS.BAD_REQUEST,
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: DIVISION_MESSAGES.THIEU_THONG_TIN,
       });
     }
     
     const members = await PeopleDivision.find({ divisionId: divisionId });
     if (members.length) {
-      return res.json({
-        status: HTTP_STATUS.BAD_REQUEST,
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: DIVISION_MESSAGES.DIVISION_CON_THANH_VIEN,
       });
     }
     
     Division.findByIdAndDelete(divisionId)
     .then(() => {
-      return res.json({
-        status: HTTP_STATUS.OK,
+      return res.status(HTTP_STATUS.OK).json({
         message: DIVISION_MESSAGES.DELETE_DIVISION_THANH_CONG,
       });
     })
     .catch((err) => {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err.message,
       });
     });

@@ -9,8 +9,7 @@ class ActionController {
     await Action.create({
       actionName: actionName,
     });
-    return res.json({
-      status: HTTP_STATUS.OK,
+    return res.status(HTTP_STATUS.OK).json({
       message: ACTION_MESSAGES.TAO_ACTION_THANH_CONG,
     });
   }
@@ -20,21 +19,18 @@ class ActionController {
     if (!actionId) {
       // Get all actions
       const actions = await Action.find({}).select("-__v");
-      return res.json({
-        status: HTTP_STATUS.OK,
+      return res.status(HTTP_STATUS.OK).json({
         message: ACTION_MESSAGES.LAY_RA_TOAN_BO_ACTION_THANH_CONG,
         data: actions
       });
     }
     const action = await Action.findById(actionId).select("-__v");
     if (!action) {
-      return res.json({
-        status: HTTP_STATUS.NOT_FOUND,
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         message: ACTION_MESSAGES.KHONG_TIM_THAY_ACTION,
       });
     }
-    return res.json({
-      status: HTTP_STATUS.OK,
+    return res.status(HTTP_STATUS.OK).json({
       message: ACTION_MESSAGES.LAY_RA_ACTION_THEO_ID_THANH_CONG,
       data: action
     });

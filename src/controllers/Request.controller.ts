@@ -7,14 +7,15 @@ import { Comment } from "../models/comment";
 import { HTTP_STATUS } from "../constants/HttpStatus";
 import { ReqEditHistory } from "../models/reqEditHistory";
 import { Category } from "../models/category";
+import { REQUEST_MESSAGES } from "../constants/messages";
 
 class RequestController {
   async create(req: Request, res: Response) {
     const { title, content, priority, categoryId } = req.body;
 
     if (!title || !content || !priority || !categoryId) {
-      return res.status(400).json({
-        "message": "thieu thong tin",
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: "Thieu thong tin",
       });
     }
 
@@ -44,12 +45,15 @@ class RequestController {
       newRequest.$set({
         __v: undefined
       });
-      return res.status(201).json(newRequest);
+      return res.status(HTTP_STATUS.CREATED).json({
+        message: REQUEST_MESSAGES.TAO_REQUEST_THANH_CONG,
+        data: newRequest
+      });
     }
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error" + err,
       });
     };
@@ -124,7 +128,10 @@ class RequestController {
       }
     ];
     const history = await ReqEditHistory.aggregate(aggregationOptions);
-    return res.status(HTTP_STATUS.OK).json(history);
+    return res.status(HTTP_STATUS.OK).json({
+      data: history,
+      message: "Lay lich su chinh sua thanh cong",
+    });
   }
 
   async index(req: Request, res: Response) {
@@ -235,12 +242,15 @@ class RequestController {
         );
         requests.push(request[0]);
       }
-      return res.status(200).json(requests);
+      return res.status(HTTP_STATUS.OK).json({
+        data: requests,
+        message: REQUEST_MESSAGES.LAY_RA_TOAN_BO_REQUEST_THANH_CONG
+      });
     }
     else {
       const process = await Process.findOne({ peopleId: userId, requestId: requestId });
       if (!process) {
-        return res.status(403).json({
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
           "message": "ban khong du tham quyen",
         });
       }
@@ -255,11 +265,14 @@ class RequestController {
         ]
       );
       if (!request.length) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           "message": "khong tim thay request",
         });
       }
-      return res.status(200).json(request[0]);
+      return res.status(HTTP_STATUS.OK).json({
+        data: request[0],
+        message: REQUEST_MESSAGES.LAY_RA_REQUEST_THEO_ID_THANH_CONG
+      });
     }
   }
 
@@ -319,7 +332,10 @@ class RequestController {
       });
       await session.commitTransaction();
       await session.endSession();
-      return res.status(HTTP_STATUS.OK).json(updatedRequest);
+      return res.status(HTTP_STATUS.OK).json({
+        data: updatedRequest,
+        message: "Cap nhap request thanh cong",
+      });
     }
     catch (err) {
       await session.abortTransaction();
@@ -334,18 +350,18 @@ class RequestController {
     const userId = res.locals.claims.userId;
     const requestId = req.params.id;
     if (!requestId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         "message": "thieu thong tin",
       });
     }
     const process = await Process.findOne({ requestId: requestId });
     if (!process) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         "message": "khong tim thay process lien quan",
       });
     }
     if (process.peopleId != userId) {
-      return res.status(403).json({
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
         "message": "ban khong du tham quyen",
       });
     }
@@ -357,14 +373,14 @@ class RequestController {
       await RequestModel.findByIdAndDelete(requestId).session(session);
       await session.commitTransaction();
       await session.endSession();
-      return res.status(200).json({
-        "message": "success",
+      return res.status(HTTP_STATUS.OK).json({
+        "message": "Xoa request thanh cong",
       });
     }
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         "message": "server error: " + err,
       });
     }
