@@ -17,6 +17,7 @@ app.use(cookieParser());
 app.use(cors({
   credentials: true,
   origin: process.env.FRONTEND || "http://localhost:3001",
+  methods: "GET, POST, OPTIONS, PUT, DELETE, PATCH",
 }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(express.json());
