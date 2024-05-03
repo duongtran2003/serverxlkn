@@ -18,7 +18,7 @@ class ActionController {
     const actionId = req.params.id;
     if (!actionId) {
       // Get all actions
-      const actions = await Action.find({}).select("-__v");
+      const actions = await Action.find({ actionName: { $nin: ["Tao moi", "Xem"] } }).select("-__v");
       return res.status(HTTP_STATUS.OK).json({
         message: ACTION_MESSAGES.LAY_RA_TOAN_BO_ACTION_THANH_CONG,
         data: actions
