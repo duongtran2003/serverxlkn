@@ -10,7 +10,7 @@ userRoute.post('/assign', isAuthenticated, isAdmin, userController.assignDivisio
 userRoute.post('/remove', isAuthenticated, isAdmin, userController.removeFromDivision);
 userRoute.post('/', isAuthenticated, isAdmin, userController.create);
 userRoute.get('/', userController.index);
-userRoute.patch('/:id', isAuthenticated, isAdmin, userController.update);
+userRoute.put('/:id', isAuthenticated, isAdmin, userController.update);
 userRoute.delete('/:id', isAuthenticated, isAdmin, userController.delete);
 
 export {

@@ -8,7 +8,7 @@ const categoryController = new CategoryController();
 
 categoryRouter.get('/:id?', isAuthenticated, categoryController.index);
 categoryRouter.post('/', isAuthenticated, categoryController.create);
-categoryRouter.patch('/:id', isAuthenticated, isAdmin, categoryController.update);
+categoryRouter.put('/:id', isAuthenticated, isAdmin, categoryController.update);
 categoryRouter.delete('/:id', isAuthenticated, isAdmin, categoryController.delete);
 
 export {

@@ -8,7 +8,7 @@ const commentController = new CommentController();
 
 commentRouter.get('/', isAuthenticated, commentController.index);
 commentRouter.post('/', isAuthenticated, commentController.create);
-commentRouter.patch('/:id', isAuthenticated, commentController.update);
+commentRouter.put('/:id', isAuthenticated, commentController.update);
 commentRouter.delete('/:id', isAuthenticated, commentController.delete);
 
 export {

@@ -8,7 +8,7 @@ const divisionController = new DivisionController();
 
 divisionRouter.get('/:id?', isAuthenticated, divisionController.index);
 divisionRouter.post('/', isAuthenticated, isAdmin, divisionController.create);
-divisionRouter.patch('/:id', isAuthenticated, isAdmin, divisionController.update);
+divisionRouter.put('/:id', isAuthenticated, isAdmin, divisionController.update);
 divisionRouter.delete('/:id', isAuthenticated, isAdmin, divisionController.delete);
 
 export {
