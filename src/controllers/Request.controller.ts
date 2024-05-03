@@ -308,15 +308,18 @@ class RequestController {
         result: request.result,
         editedBy: userId,
         requestId: request._id,
+        createdDate: request.createdDate,
       }
 
       await ReqEditHistory.create([history], { session: session });
-      const { title, content, categoryId, result } = req.body;
+      const { title, content, categoryId, result, createdDate, priority } = req.body;
       const patched = {
         title: title || undefined,
         content: content || undefined,
         categoryId: undefined,
         result: result || undefined,
+        createdDate: createdDate || undefined, 
+        priority: priority || undefined,
       }
       if (categoryId) {
         const category = await Category.findById(categoryId);
