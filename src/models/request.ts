@@ -22,6 +22,9 @@ const requestSchema = new Schema<IRequest> ({
   result: {
     type: String,
     default: "Dang xu li",
+  },
+  createdDate: {
+    type: String,
   }
 }, {
   timestamps: true,

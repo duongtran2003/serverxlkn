@@ -28,7 +28,8 @@ interface IRequest {
   categoryId: Schema.Types.ObjectId,
   status: string,
   duplicateRequestId: Schema.Types.ObjectId | null,
-  result: string
+  result: string,
+  createdDate: string,
 }
 
 interface IReqEditHistory {
@@ -43,6 +44,7 @@ interface IReqEditHistory {
   result: string,
   editedBy: Schema.Types.ObjectId,
   requestId: Schema.Types.ObjectId,
+  createdDate: string,
 }
 
 interface IComment {

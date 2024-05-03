@@ -11,9 +11,9 @@ import { REQUEST_MESSAGES } from "../constants/messages";
 
 class RequestController {
   async create(req: Request, res: Response) {
-    const { title, content, priority, categoryId } = req.body;
+    const { title, content, priority, categoryId, createdDate } = req.body;
 
-    if (!title || !content || !priority || !categoryId) {
+    if (!title || !content || !priority || !categoryId || !createdDate) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         message: "Thieu thong tin",
       });
@@ -25,6 +25,7 @@ class RequestController {
       priority: priority,
       peopleId: res.locals.claims.userId,
       categoryId: categoryId,
+      createdDate: createdDate,
       status: "Da tao"
     }
 
