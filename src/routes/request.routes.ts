@@ -13,7 +13,7 @@ requestRouter.post('/', isAuthenticated, requestController.create);
 requestRouter.get('/viewHistory/:id', isAuthenticated, requestController.viewHistory);
 requestRouter.get('/:id?', isAuthenticated, requestController.index);
 requestRouter.delete('/:id', isAuthenticated, requestController.delete);
-requestRouter.patch('/:id', isAuthenticated, requestController.update);
+requestRouter.put('/:id', isAuthenticated, requestController.update);
 
 
 export {
