@@ -139,6 +139,7 @@ class RequestController {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
 
+
     const aggregationOptions = [
       {
         $lookup: {
@@ -168,6 +169,11 @@ class RequestController {
           localField: '_id',
           foreignField: 'requestId',
           pipeline: [
+            {
+              $match: {
+                peopleId: new mongoose.Types.ObjectId(userId),
+              }
+            },
             {
               $lookup: {
                 from: 'actions',
