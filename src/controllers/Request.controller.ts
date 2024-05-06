@@ -414,6 +414,10 @@ class RequestController {
           "message": "khong tim thay request",
         });
       }
+
+      let prevAction = await Action.findById(process.actionId);
+      // process.actionName != "Da tao"  => delete process => SCUFFED solution
+
       let action = await Action.findOne({ actionName: "Xem" });
       if (action) {
         process.$set({
@@ -439,7 +443,12 @@ class RequestController {
           status: action.actionName,
         });
       }
-      await process.save({ session: session });
+      if (prevAction?.actionName == "Tao moi") {
+        await process.save({ session: session });
+      }
+      else {
+        await Process.findByIdAndDelete(process._id).session(session);
+      }
       await request.save({ session: session });
       const newProcess = {
         peopleId: peopleId,
