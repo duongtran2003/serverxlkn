@@ -442,7 +442,7 @@ class RequestController {
       }
 
       let prevAction = await Action.findById(process.actionId);
-      // process.actionName != "Da tao"  => delete process => SCUFFED solution
+      // process.actionName != "Tao moi"  => delete process => SCUFFED solution
 
       let action = await Action.findOne({ actionName: "Xem" });
       if (action) {
@@ -469,7 +469,7 @@ class RequestController {
           status: action.actionName,
         });
       }
-      if (prevAction?.actionName == "Tao moi") {
+      if (prevAction?.actionName == "Tao moi" || action.actionName == "Phe duyet") {
         await process.save({ session: session });
       }
       else {
