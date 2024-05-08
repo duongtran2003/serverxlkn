@@ -18,7 +18,6 @@ class RequestController {
         message: "Thieu thong tin",
       });
     }
-
     const request = {
       title: title,
       content: content,
@@ -28,6 +27,8 @@ class RequestController {
       createdDate: createdDate,
       status: "Da tao"
     }
+
+
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -135,6 +136,7 @@ class RequestController {
     });
   }
 
+
   async index(req: Request, res: Response) {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
@@ -169,11 +171,11 @@ class RequestController {
           localField: '_id',
           foreignField: 'requestId',
           pipeline: [
-            {
-              $match: {
-                peopleId: new mongoose.Types.ObjectId(userId),
-              }
-            },
+            // {
+            //   $match: {
+            //     peopleId: new mongoose.Types.ObjectId(userId),
+            //   }
+            // },
             {
               $lookup: {
                 from: 'actions',
@@ -195,14 +197,32 @@ class RequestController {
             },
             {
               $unwind: "$people"
+            },
+            {
+              $project: {
+                "peopleId": 0,
+                "requestId": 0,
+                "actionId": 0,
+                "__v": 0,
+                "action.id": 0,
+                "action.createdAt": 0,
+                "action.updatedAt": 0,
+                "action.__v": 0,
+                "people.id": 0,
+                "people.createdAt": 0,
+                "people.updatedAt": 0,
+                "people.__v": 0,
+                "people.password": 0,
+                "people.isAdmin": 0,
+              }
             }
           ],
-          as: 'process',
+          as: 'processes',
         }
       },
-      {
-        $unwind: "$process"
-      },
+      // {
+      //   $unwind: "$process"
+      // },
       {
         $project: {
           "peopleId": 0,
@@ -216,20 +236,20 @@ class RequestController {
           "category.updatedAt": 0,
           "category.createdAt": 0,
           "category.__v": 0,
-          "process.peopleId": 0,
-          "process.requestId": 0,
-          "process.actionId": 0,
-          "process.__v": 0,
-          "process.action.id": 0,
-          "process.action.createdAt": 0,
-          "process.action.updatedAt": 0,
-          "process.action.__v": 0,
-          "process.people.id": 0,
-          "process.people.createdAt": 0,
-          "process.people.updatedAt": 0,
-          "process.people.__v": 0,
-          "process.people.password": 0,
-          "process.people.isAdmin": 0,
+          // "process.peopleId": 0,
+          // "process.requestId": 0,
+          // "process.actionId": 0,
+          // "process.__v": 0,
+          // "process.action.id": 0,
+          // "process.action.createdAt": 0,
+          // "process.action.updatedAt": 0,
+          // "process.action.__v": 0,
+          // "process.people.id": 0,
+          // "process.people.createdAt": 0,
+          // "process.people.updatedAt": 0,
+          // "process.people.__v": 0,
+          // "process.people.password": 0,
+          // "process.people.isAdmin": 0,
         }
       }
     ];
@@ -324,7 +344,7 @@ class RequestController {
         content: content || undefined,
         categoryId: undefined,
         result: result || undefined,
-        createdDate: createdDate || undefined, 
+        createdDate: createdDate || undefined,
         priority: priority || undefined,
       }
       if (categoryId) {
