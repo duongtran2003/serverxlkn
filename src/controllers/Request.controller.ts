@@ -510,7 +510,7 @@ class RequestController {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const prevProcess = await Process.findOne({ requestId: requestId, status: "Cho phe duyet" });
+      const prevProcess = await Process.findOne({ requestId: requestId, result: "Cho phe duyet" });
       await Process.findOneAndDelete({ requestId: requestId, peopleId: userId }).session(session);
       const request = await RequestModel.findById(requestId);
       if (!prevProcess) {
