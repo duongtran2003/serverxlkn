@@ -1,254 +1,225 @@
 import { Request, Response } from "express";
 import { Validator } from "../helpers/validator";
-import { People } from "../models/people";
 import bcrypt from 'bcrypt';
 import { Division } from "../models/division";
 import { Action } from "../models/action";
-import { PeopleDivision } from "../models/peopleDivision";
 import { HTTP_STATUS } from "../constants/HttpStatus";
+import { USER_MESSAGES } from "../constants/messages";
+import { UserService } from "../services/User.service";
 
 class UserController {
+  userService: UserService;
+
+  constructor() {
+    this.userService = new UserService();
+  }
+
   async create(req: Request, res: Response) {
     const { fullname, username, email, password } = req.body;
     if (!fullname || !username || !email || !password) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thieu thong tin",
+        "message": USER_MESSAGES.THIEU_THONG_TIN,
       });
     }
     const validator = new Validator();
     if (!validator.isEmail(email) || !validator.isUsername(username) || !validator.isPassword(password)) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thong tin khong hop le",
+        "message": USER_MESSAGES.THONG_TIN_KHONG_HOP_LE,
       });
     }
-    let user = await People.findOne({ username: username });
-    if (user) {
-      return res.status(HTTP_STATUS.CONFLICT).json({
-        "message": "username da ton tai",
-      });
-    }
-    
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-
-    const newUser = {
-      fullname: fullname,
-      username: username,
-      email: email,
-      password: hashedPassword,
-    }
-    
-    People.create(newUser)
-    .then((user) => {
-      user.$set({ password: undefined });
-      user.$set({ __v: undefined });
+    try {
+      let user = await this.userService.getUserByUsername(username);
+      if (user) {
+        return res.status(HTTP_STATUS.CONFLICT).json({
+          "message": USER_MESSAGES.USERNAME_TON_TAI,
+        });
+      }
+      let newUser = await this.userService.createNewUser(fullname, username, email, password);
       return res.status(HTTP_STATUS.CREATED).json({
-        data: user,
-        message: "Tao user moi thanh cong",
+        message: USER_MESSAGES.TAO_USER_THANH_CONG,
+        data: newUser,
       });
-    })
-    .catch((err) => {
+    }
+    catch (err) {
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error: " + err.message,
+        message: USER_MESSAGES.SERVER_ERROR,
       });
-    })
+    }
   }
-  
+
   async index(req: Request, res: Response) {
     const username = req.query.username;
     const email = req.query.email;
     const fullname = req.query.fullname;
     const id = req.query.id;
-   
+
     let options = [];
     if (username) {
-      options.push({ username: { $regex: '.*' + username + '.*' }});
+      options.push({ username: { $regex: '.*' + username + '.*' } });
     }
     if (email) {
-      options.push({ email: { $regex: '.*' + email + '.*' }});
+      options.push({ email: { $regex: '.*' + email + '.*' } });
     }
     if (fullname) {
-      options.push({ fullname: { $regex: '.*' + fullname + '.*' }});
+      options.push({ fullname: { $regex: '.*' + fullname + '.*' } });
     }
     if (id) {
-      options.push({ _id: id});
+      options.push({ _id: id });
     }
-    
-    let users: any = [];
 
-    if (options.length) {
-      users = await People.find({ $or: options }, { password: 0, __v: 0, isAdmin: 0 });
+    try {
+      let users: any = [];
+
+      if (options.length) {
+        users = await this.userService.getUsersWithOptions(options);
+      }
+      else {
+        users = await this.userService.getAllUsers();
+      }
+
+      return res.status(HTTP_STATUS.OK).json({
+        data: users,
+        message: USER_MESSAGES.LAY_RA_TOAN_BO_USERS_THANH_CONG,
+      });
     }
-    else {
-      users = await People.find({}, { password: 0, __v: 0, isAdmin: 0 });
+    catch (err) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: USER_MESSAGES.SERVER_ERROR,
+      })
     }
-    return res.status(HTTP_STATUS.OK).json({
-      data: users,
-      message: "Lay ra toan bo users thanh cong",
-    });
   }
-  
+
   async update(req: Request, res: Response) {
     const validator = new Validator();
     const { username, fullname, email, password, oldPassword } = req.body;
     const userId = req.params.id;
     if (!userId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thieu user id",
+        "message": USER_MESSAGES.THIEU_USER_ID,
       })
-    }
-    let updatedUser: {
-      fullname: string | undefined,
-      username: string | undefined,
-      email: string | undefined,
-      password: string | undefined,
-    } = {
-      fullname: undefined,
-      username: undefined,
-      email: undefined,
-      password: undefined
     }
     if (username) {
       if (!validator.isUsername(username)) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          "message": "thong tin khong hop le",
+          "message": USER_MESSAGES.THONG_TIN_KHONG_HOP_LE,
         });
       }
-      const user = await People.findOne({ username: username });
+      const user = await this.userService.getUserByUsername(username);
       if (user) {
         return res.status(HTTP_STATUS.CONFLICT).json({
-          "message": "username da ton tai",
+          "message": USER_MESSAGES.USERNAME_TON_TAI,
         });
       }
-      updatedUser.username = username;
     }
 
     if (email) {
       if (!validator.isEmail(email)) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          "message": "thong tin khong hop le",
+          "message": USER_MESSAGES.THONG_TIN_KHONG_HOP_LE,
         });
-      }      
-      updatedUser.email = email;
+      }
     }
-    
-    if (fullname) {
-      updatedUser.fullname = fullname;
-    }
-    
+
     if (password) {
       if (!oldPassword) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          "message": "thieu mat khau cu",
+          "message": USER_MESSAGES.THIEU_THONG_TIN,
         });
       }
       if (!validator.isPassword(password)) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          "message": "thong tin khong hop le",
+          "message": USER_MESSAGES.THONG_TIN_KHONG_HOP_LE,
         });
       }
-      let user = await People.findById(userId);
+      let user = await this.userService.getUserById(userId);
       if (!user) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
-          "message": "khong tim thay user",
+          "message": USER_MESSAGES.KHONG_TIM_THAY_USER,
         });
       }
       const result = await bcrypt.compare(oldPassword, user.password);
-      if (result) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        updatedUser.password = hashedPassword;
-      }
-      else {
+      if (!result) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          "message": "mat khau khong trung khop",
+          "message": USER_MESSAGES.THONG_TIN_KHONG_HOP_LE,
         });
       }
     }
-    People.findByIdAndUpdate(userId, updatedUser, { new: true })
-    .then((updatedUser) => {
+    try {
+      const updatedUser = await this.userService.updateUser(userId, username, fullname, email, password, oldPassword);
       if (!updatedUser) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
-          "message": "khong tim thay user",
+          message: USER_MESSAGES.KHONG_TIM_THAY_USER,
         });
       }
-      updatedUser?.$set({ 
-        password: undefined,
-        __v: undefined,
-      });
       return res.status(HTTP_STATUS.OK).json({
         data: updatedUser,
-        message: "Cap nhat thong tin user thanh cong"
+        message: USER_MESSAGES.CAP_NHAT_USER_THANH_CONG,
       });
-    })
-    .catch((err) => {
+    }
+    catch (err) {
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error: " + err.message,
+        message: USER_MESSAGES.SERVER_ERROR,
       });
-    });
+    }
   }
-  
+
   async delete(req: Request, res: Response) {
     const userId = req.params.id;
     if (!userId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thieu thong tin",
+        "message": USER_MESSAGES.THIEU_THONG_TIN,
       })
     }
-    People.findByIdAndDelete(userId)
-    .then(() => {
+    try {
+      await this.userService.deleteUser(userId);
       return res.status(HTTP_STATUS.OK).json({
-        "message": "success",
-      });
-    })
-    .catch((err) => {
+        message: USER_MESSAGES.XOA_USER_THANH_CONG,
+      })
+    }
+    catch (err) {
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error: " + err.message,
-      });
-    });
+        message: USER_MESSAGES.SERVER_ERROR,
+      })
+    }
   }
-  
+
   async assignDivision(req: Request, res: Response) {
     const { divisionId, actionId, peopleId } = req.body;
     const division = await Division.findById(divisionId);
     const action = await Action.findById(actionId);
-    const people = await People.findById(peopleId);
+    const people = await this.userService.getUserById(peopleId);
     if (!division || !action || !people) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({
-        "message": "khong tim thay division, action hoac user",
+        "message": USER_MESSAGES.KHONG_TIM_THAY_DIVISION_HOAC_ACTION_HOAC_USER,
       });
     }
-    PeopleDivision.create({ peopleId, actionId, divisionId })
-    .then((created) => {
-      created.$set({
-        __v: undefined
-      });
+    try {
+      const peopleDivision = await this.userService.assignDivision(peopleId, actionId, divisionId);
       return res.status(HTTP_STATUS.CREATED).json({
-        data: created,
-        message: "Gan division thanh cong"
+        data: peopleDivision,
+        message: USER_MESSAGES.GAN_DIVISION_THANH_CONG,
       });
-    })
-    .catch((err) => {
+    }
+    catch (err) {
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error: " + err.message,
-      });
-    });
+        "message": USER_MESSAGES.SERVER_ERROR,
+      })
+    };
   }
-  
+
   async removeFromDivision(req: Request, res: Response) {
     const { peopleId, divisionId } = req.body;
-    await PeopleDivision.deleteOne({ peopleId: peopleId, divisionId: divisionId })
-    .then(() => {
+    try {
+      await this.userService.removeFromDivision(peopleId, divisionId);
       return res.status(HTTP_STATUS.OK).json({
-        "message": "success",
+        "message": USER_MESSAGES.GO_DIVISION_THANH_CONG,
       });
-    })
-    .catch((err) => {
+    }
+    catch (err) {
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error: " + err.message,
+        "message": USER_MESSAGES.SERVER_ERROR,
       });
-    });
+    }
   }
 }
 

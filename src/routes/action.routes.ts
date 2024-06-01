@@ -6,8 +6,8 @@ import { ActionController } from "../controllers/Action.controller";
 const actionRouter = Router();
 const actionController = new ActionController();
 
-actionRouter.post('/', isAuthenticated, isAdmin, actionController.create);
-actionRouter.get('/:id?', isAuthenticated, actionController.index);
+actionRouter.post('/', isAuthenticated, isAdmin, actionController.create.bind(actionController));
+actionRouter.get('/:id?', isAuthenticated, actionController.index.bind(actionController));
 
 export {
   actionRouter,

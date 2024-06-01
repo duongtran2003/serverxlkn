@@ -6,10 +6,10 @@ import { CategoryController } from "../controllers/Category.controller";
 const categoryRouter = Router();
 const categoryController = new CategoryController();
 
-categoryRouter.get('/:id?', isAuthenticated, categoryController.index);
-categoryRouter.post('/', isAuthenticated, categoryController.create);
-categoryRouter.put('/:id', isAuthenticated, isAdmin, categoryController.update);
-categoryRouter.delete('/:id', isAuthenticated, isAdmin, categoryController.delete);
+categoryRouter.get('/:id?', isAuthenticated, categoryController.index.bind(categoryController));
+categoryRouter.post('/', isAuthenticated, categoryController.create.bind(categoryController));
+categoryRouter.put('/:id', isAuthenticated, isAdmin, categoryController.update.bind(categoryController));
+categoryRouter.delete('/:id', isAuthenticated, isAdmin, categoryController.delete.bind(categoryController));
 
 export {
   categoryRouter,

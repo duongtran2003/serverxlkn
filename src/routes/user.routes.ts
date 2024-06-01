@@ -6,12 +6,12 @@ import { isAuthenticated } from "../guards/isAuthenticated";
 const userController = new UserController();
 const userRoute = Router();
 
-userRoute.post('/assign', isAuthenticated, isAdmin, userController.assignDivision);
-userRoute.post('/remove', isAuthenticated, isAdmin, userController.removeFromDivision);
-userRoute.post('/', isAuthenticated, isAdmin, userController.create);
-userRoute.get('/', userController.index);
-userRoute.put('/:id', isAuthenticated, isAdmin, userController.update);
-userRoute.delete('/:id', isAuthenticated, isAdmin, userController.delete);
+userRoute.post('/assign', isAuthenticated, isAdmin, userController.assignDivision.bind(userController));
+userRoute.post('/remove', isAuthenticated, isAdmin, userController.removeFromDivision.bind(userController));
+userRoute.post('/', isAuthenticated, isAdmin, userController.create.bind(userController));
+userRoute.get('/', userController.index.bind(userController));
+userRoute.put('/:id', isAuthenticated, isAdmin, userController.update.bind(userController));
+userRoute.delete('/:id', isAuthenticated, isAdmin, userController.delete.bind(userController));
 
 export {
   userRoute

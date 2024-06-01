@@ -5,19 +5,34 @@ import { Action } from "../models/action";
 import { Process } from "../models/process";
 import { Comment } from "../models/comment";
 import { HTTP_STATUS } from "../constants/HttpStatus";
-import { ReqEditHistory } from "../models/reqEditHistory";
-import { Category } from "../models/category";
 import { REQUEST_MESSAGES } from "../constants/messages";
+import { RequestService } from "../services/Request.service";
+import { ActionService } from "../services/Action.service";
+import { CategoryService } from "../services/Category.service";
+import { ProcessService } from "../services/Process.service";
 
 class RequestController {
+  requestService: RequestService;
+  actionService: ActionService;
+  categoryService: CategoryService;
+  processService: ProcessService;
+
+  constructor() {
+    this.requestService = new RequestService();
+    this.actionService = new ActionService();
+    this.categoryService = new CategoryService();
+    this.processService = new ProcessService();
+  }
+
   async create(req: Request, res: Response) {
     const { title, content, priority, categoryId, createdDate } = req.body;
 
     if (!title || !content || !priority || !categoryId || !createdDate) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        message: "Thieu thong tin",
+        message: REQUEST_MESSAGES.THIEU_THONG_TIN,
       });
     }
+
     const request = {
       title: title,
       content: content,
@@ -28,13 +43,11 @@ class RequestController {
       status: "Da tao"
     }
 
-
-
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const newRequest = (await RequestModel.create([request], { session: session }))[0];
-      const action = await Action.findOne({ actionName: "Tao moi" });
+      const newRequest = await this.requestService.createNewRequest(request, session);
+      const action = await this.actionService.getActionByName("Tao moi");
 
       const process = {
         requestId: newRequest._id,
@@ -44,9 +57,6 @@ class RequestController {
       const newProcess = (await Process.create([process], { session: session }))[0];
       await session.commitTransaction();
       await session.endSession();
-      newRequest.$set({
-        __v: undefined
-      });
       return res.status(HTTP_STATUS.CREATED).json({
         message: REQUEST_MESSAGES.TAO_REQUEST_THANH_CONG,
         data: newRequest
@@ -56,7 +66,7 @@ class RequestController {
       await session.abortTransaction();
       await session.endSession();
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error" + err,
+        message: REQUEST_MESSAGES.SERVER_ERROR,
       });
     };
   }
@@ -65,262 +75,84 @@ class RequestController {
     const requestId = req.params.id;
     if (!requestId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thieu thong tin",
+        message: REQUEST_MESSAGES.THIEU_THONG_TIN,
       });
     }
-    const aggregationOptions = [
-      {
-        $match: {
-          requestId: new mongoose.Types.ObjectId(requestId),
-        }
-      },
-      {
-        $lookup: {
-          from: 'peoples',
-          localField: 'peopleId',
-          foreignField: '_id',
-          as: 'people',
-        }
-      },
-      {
-        $unwind: "$people",
-      },
-      {
-        $lookup: {
-          from: 'categories',
-          localField: 'categoryId',
-          foreignField: "_id",
-          as: 'category'
-        }
-      },
-      {
-        $unwind: "$category"
-      },
-      {
-        $lookup: {
-          from: 'peoples',
-          localField: 'editedBy',
-          foreignField: '_id',
-          as: 'editedBy',
-        }
-      },
-      {
-        $unwind: "$editedBy",
-      },
-      {
-        $project: {
-          "peopleId": 0,
-          "requestId": 0,
-          "categoryId": 0,
-          "__v": 0,
-          "people.password": 0,
-          "people.isAdmin": 0,
-          "people.updatedAt": 0,
-          "people.createdAt": 0,
-          "people.__v": 0,
-          "category.updatedAt": 0,
-          "category.createdAt": 0,
-          "category.__v": 0,
-          "editedBy.password": 0,
-          "editedBy.isAdmin": 0,
-          "editedBy.createdAt": 0,
-          "editedBy.updatedAt": 0,
-          "editedBy.__v": 0,
-        }
-      }
-    ];
-    const history = await ReqEditHistory.aggregate(aggregationOptions);
-    return res.status(HTTP_STATUS.OK).json({
-      data: history,
-      message: "Lay lich su chinh sua thanh cong",
-    });
+    try {
+      const history = await this.requestService.viewRequestHistory(requestId);
+      return res.status(HTTP_STATUS.OK).json({
+        data: history,
+        message: REQUEST_MESSAGES.LAY_LICH_SU_THANH_CONG,
+      });
+    }
+    catch (err) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: REQUEST_MESSAGES.SERVER_ERROR,
+      });
+    }
   }
-
 
   async index(req: Request, res: Response) {
     const requestId = req.params.id;
     const userId = res.locals.claims.userId;
 
+    try {
+      if (!requestId) {
+        const processes = await Process.find({ peopleId: userId });
+        const requests: any = [];
+        for (const process of processes) {
+          const request = await this.requestService.aggregateRequest(process.requestId.toString());
+          if (request) {
+            requests.push(request);
+          }
+        }
+        return res.status(HTTP_STATUS.OK).json({
+          data: requests,
+          message: REQUEST_MESSAGES.LAY_RA_TOAN_BO_REQUEST_THANH_CONG
+        });
+      }
 
-    const aggregationOptions = [
-      {
-        $lookup: {
-          from: 'peoples',
-          localField: 'peopleId',
-          foreignField: '_id',
-          as: 'people',
-        }
-      },
-      {
-        $unwind: "$people",
-      },
-      {
-        $lookup: {
-          from: 'categories',
-          localField: 'categoryId',
-          foreignField: "_id",
-          as: 'category'
-        }
-      },
-      {
-        $unwind: "$category"
-      },
-      {
-        $lookup: {
-          from: 'processes',
-          localField: '_id',
-          foreignField: 'requestId',
-          pipeline: [
-            // {
-            //   $match: {
-            //     peopleId: new mongoose.Types.ObjectId(userId),
-            //   }
-            // },
-            {
-              $lookup: {
-                from: 'actions',
-                localField: 'actionId',
-                foreignField: '_id',
-                as: 'action',
-              }
-            },
-            {
-              $unwind: "$action"
-            },
-            {
-              $lookup: {
-                from: 'peoples',
-                localField: 'peopleId',
-                foreignField: '_id',
-                as: 'people',
-              }
-            },
-            {
-              $unwind: "$people"
-            },
-            {
-              $project: {
-                "peopleId": 0,
-                "requestId": 0,
-                "actionId": 0,
-                "__v": 0,
-                "action.id": 0,
-                "action.createdAt": 0,
-                "action.updatedAt": 0,
-                "action.__v": 0,
-                "people.id": 0,
-                "people.createdAt": 0,
-                "people.updatedAt": 0,
-                "people.__v": 0,
-                "people.password": 0,
-                "people.isAdmin": 0,
-              }
-            }
-          ],
-          as: 'processes',
-        }
-      },
-      // {
-      //   $unwind: "$process"
-      // },
-      {
-        $project: {
-          "peopleId": 0,
-          "categoryId": 0,
-          "__v": 0,
-          "people.password": 0,
-          "people.isAdmin": 0,
-          "people.updatedAt": 0,
-          "people.createdAt": 0,
-          "people.__v": 0,
-          "category.updatedAt": 0,
-          "category.createdAt": 0,
-          "category.__v": 0,
-          // "process.peopleId": 0,
-          // "process.requestId": 0,
-          // "process.actionId": 0,
-          // "process.__v": 0,
-          // "process.action.id": 0,
-          // "process.action.createdAt": 0,
-          // "process.action.updatedAt": 0,
-          // "process.action.__v": 0,
-          // "process.people.id": 0,
-          // "process.people.createdAt": 0,
-          // "process.people.updatedAt": 0,
-          // "process.people.__v": 0,
-          // "process.people.password": 0,
-          // "process.people.isAdmin": 0,
-        }
-      }
-    ];
-    if (!requestId) {
-      const processes = await Process.find({ peopleId: userId });
-      const requests: any = [];
-      for (const process of processes) {
-        const request = await RequestModel.aggregate(
-          [
-            {
-              $match: {
-                _id: process.requestId,
-              }
-            },
-            ...aggregationOptions
-          ]
-        );
-        requests.push(request[0]);
-      }
-      return res.status(HTTP_STATUS.OK).json({
-        data: requests,
-        message: REQUEST_MESSAGES.LAY_RA_TOAN_BO_REQUEST_THANH_CONG
-      });
-    }
-    else {
       const process = await Process.findOne({ peopleId: userId, requestId: requestId });
       if (!process) {
         return res.status(HTTP_STATUS.FORBIDDEN).json({
-          "message": "ban khong du tham quyen",
+          message: REQUEST_MESSAGES.KHONG_SO_HUU_REQUEST,
         });
       }
-      const request = await RequestModel.aggregate(
-        [
-          {
-            $match: {
-              _id: process.requestId,
-            }
-          },
-          ...aggregationOptions
-        ]
-      );
-      if (!request.length) {
+      const request = await this.requestService.aggregateRequest(process.requestId.toString());
+      if (!request) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
-          "message": "khong tim thay request",
+          meesage: REQUEST_MESSAGES.KHONG_TIM_THAY_REQUEST,
         });
       }
       return res.status(HTTP_STATUS.OK).json({
-        data: request[0],
+        data: request,
         message: REQUEST_MESSAGES.LAY_RA_REQUEST_THEO_ID_THANH_CONG
+      });
+    }
+    catch (err) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: REQUEST_MESSAGES.SERVER_ERROR,
       });
     }
   }
 
   async update(req: Request, res: Response) {
     const requestId = req.params.id;
-
     const userId = res.locals.claims.userId;
 
     if (!requestId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thieu thong tin",
+        message: REQUEST_MESSAGES.THIEU_THONG_TIN,
       });
     }
 
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const request = await RequestModel.findById(requestId);
+      const request = await this.requestService.aggregateRequest(requestId);
       if (!request) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
-          "message": "khong tim thay request",
+          message: REQUEST_MESSAGES.KHONG_TIM_THAY_REQUEST,
         });
       }
       const history = {
@@ -337,7 +169,7 @@ class RequestController {
         createdDate: request.createdDate,
       }
 
-      await ReqEditHistory.create([history], { session: session });
+      await this.requestService.createRequestHistory(history, session);
       const { title, content, categoryId, result, createdDate, priority } = req.body;
       const patched = {
         title: title || undefined,
@@ -348,30 +180,27 @@ class RequestController {
         priority: priority || undefined,
       }
       if (categoryId) {
-        const category = await Category.findById(categoryId);
+        const category = await this.categoryService.getCategoryById(categoryId);
         if (!category) {
           return res.status(HTTP_STATUS.NOT_FOUND).json({
-            "message": "khong tim thay category",
+            message: REQUEST_MESSAGES.KHONG_TIM_THAY_CATEGORY,
           });
         }
         patched.categoryId = categoryId;
       }
-      const updatedRequest = await RequestModel.findByIdAndUpdate(requestId, patched, { new: true }).session(session);
-      updatedRequest?.$set({
-        __v: undefined,
-      });
+      const updatedRequest = await this.requestService.updateRequest(requestId, patched, session);
       await session.commitTransaction();
       await session.endSession();
       return res.status(HTTP_STATUS.OK).json({
         data: updatedRequest,
-        message: "Cap nhap request thanh cong",
+        message: REQUEST_MESSAGES.CAP_NHAT_REQUEST_THANH_CONG,
       });
     }
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error",
+        message: REQUEST_MESSAGES.SERVER_ERROR,
       });
     }
   }
@@ -381,37 +210,37 @@ class RequestController {
     const requestId = req.params.id;
     if (!requestId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thieu thong tin",
+        message: REQUEST_MESSAGES.THIEU_THONG_TIN,
       });
     }
     const process = await Process.findOne({ requestId: requestId });
     if (!process) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({
-        "message": "khong tim thay process lien quan",
+        message: REQUEST_MESSAGES.KHONG_TIM_THAY_PROCESS,
       });
     }
     if (process.peopleId != userId) {
       return res.status(HTTP_STATUS.FORBIDDEN).json({
-        "message": "ban khong du tham quyen",
+        message: REQUEST_MESSAGES.KHONG_SO_HUU_REQUEST,
       });
     }
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      await Process.deleteOne({ requestId: requestId }).session(session);
+      await this.processService.deleteByRequestId(requestId, session);
       await Comment.deleteMany({ requestId: requestId }).session(session);
-      await RequestModel.findByIdAndDelete(requestId).session(session);
+      await this.requestService.deleteRequest(requestId, session);
       await session.commitTransaction();
       await session.endSession();
       return res.status(HTTP_STATUS.OK).json({
-        "message": "Xoa request thanh cong",
+        message: REQUEST_MESSAGES.XOA_REQUEST_THANH_CONG,
       });
     }
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error: " + err,
+        message: REQUEST_MESSAGES.SERVER_ERROR,
       });
     }
   }
@@ -422,26 +251,26 @@ class RequestController {
     const requestId = req.params.id;
     if (!peopleId || !actionId || !requestId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        "message": "thieu thong tin",
+        message: REQUEST_MESSAGES.THIEU_THONG_TIN,
       });
     }
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const request = await RequestModel.findById(requestId);
-      const process = await Process.findOne({ peopleId: userId, requestId: requestId });
+      const request = await this.requestService.getRequestById(requestId);
+      const process = await this.processService.getByRequestIdAndUserId(userId, requestId);
       if (!process) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
-          "message": "khong tim thay process lien quan",
+          message: REQUEST_MESSAGES.KHONG_TIM_THAY_PROCESS,
         });
       }
       if (!request) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
-          "message": "khong tim thay request",
+          message: REQUEST_MESSAGES.KHONG_TIM_THAY_REQUEST,
         });
       }
 
-      let prevAction = await Action.findById(process.actionId);
+      let prevAction = await this.actionService.getActionById(process.actionId.toString());
       // process.actionName != "Tao moi"  => delete process => SCUFFED solution
 
       let action = await Action.findOne({ actionName: "Xem" });
@@ -485,14 +314,14 @@ class RequestController {
       await session.commitTransaction();
       await session.endSession();
       return res.status(HTTP_STATUS.OK).json({
-        "message": "success",
+        message: REQUEST_MESSAGES.CHUYEN_TIEP_THANH_CONG,
       });
     }
     catch (err) {
       await session.abortTransaction();
       await session.endSession();
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        "message": "server error",
+        message: REQUEST_MESSAGES.SERVER_ERROR,
       });
     }
   }

@@ -1,10 +1,18 @@
 import { Request, Response } from "express";
-import { Category } from "../models/category";
-import { Request as RequestModel } from "../models/request";
 import { HTTP_STATUS } from "../constants/HttpStatus";
 import { CATEGORY_MESSAGES } from "../constants/messages";
+import { CategoryService } from "../services/Category.service";
+import { RequestService } from "../services/Request.service";
 
 class CategoryController {
+  categoryService: CategoryService;
+  requestService: RequestService;
+
+  constructor() {
+    this.categoryService = new CategoryService();
+    this.requestService = new RequestService();
+  }
+
   async create(req: Request, res: Response) {
     const description = req.body.description;
     if (!description) {
@@ -12,45 +20,50 @@ class CategoryController {
         message: CATEGORY_MESSAGES.THIEU_THONG_TIN,
       });
     }
-    const newCategory = {
+    const category = {
       description: description,
     }
-    Category.create(newCategory)
-      .then((newCategory) => {
-        newCategory.$set({
-          __v: undefined,
-        })
-        return res.status(HTTP_STATUS.OK).json({
-          message: CATEGORY_MESSAGES.TAO_CATEGORY_THANH_CONG,
-          data: newCategory,
-        });
-      })
-      .catch((err) => {
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-          message: "server error: " + err.message,
-        });
+
+    try {
+      const newCategory = await this.categoryService.createNewCategory(category);
+      return res.status(HTTP_STATUS.CREATED).json({
+        data: newCategory,
+        message: CATEGORY_MESSAGES.TAO_CATEGORY_THANH_CONG,
       });
+    }
+    catch (err) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: CATEGORY_MESSAGES.SERVER_ERROR,
+      });
+    }
   }
 
   async index(req: Request, res: Response) {
     const categoryId = req.params.id;
-    if (!categoryId) {
-      const categories = await Category.find({}).select("-__v");
+    try {
+      if (!categoryId) {
+        const categories = await this.categoryService.getAllCategories();
+        return res.status(HTTP_STATUS.OK).json({
+          data: categories,
+          message: CATEGORY_MESSAGES.LAY_RA_TOAN_BO_CATEGORY_THANH_CONG,
+        });
+      }
+      const category = await this.categoryService.getCategoryById(categoryId);
+      if (!category) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          message: CATEGORY_MESSAGES.KHONG_TIM_THAY_CATEGORY,
+        });
+      }
       return res.status(HTTP_STATUS.OK).json({
-        message: CATEGORY_MESSAGES.LAY_RA_TOAN_BO_CATEGORY_THANH_CONG,
-        data: categories,
+        data: category,
+        message: CATEGORY_MESSAGES.LAY_RA_CATEGORY_THEO_ID_THANH_CONG,
       });
     }
-    const category = await Category.findById(categoryId).select("-__v");
-    if (!category) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        message: CATEGORY_MESSAGES.KHONG_TIM_THAY_CATEGORY,
+    catch (err) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: CATEGORY_MESSAGES.SERVER_ERROR,
       });
     }
-    return res.status(HTTP_STATUS.OK).json({
-      message: CATEGORY_MESSAGES.LAY_RA_CATEGORY_THEO_ID_THANH_CONG,
-      data: category,
-    });
   }
 
   async update(req: Request, res: Response) {
@@ -66,26 +79,23 @@ class CategoryController {
       description: req.body.description || undefined,
     }
 
-    Category.findByIdAndUpdate(categoryId, category, { new: true })
-      .then((updated) => {
-        if (!updated) {
-          return res.status(HTTP_STATUS.NOT_FOUND).json({
-            message: CATEGORY_MESSAGES.KHONG_TIM_THAY_CATEGORY,
-          });
-        }
-        updated?.$set({
-          __v: undefined
-        })
-        return res.status(HTTP_STATUS.OK).json({
-          message: CATEGORY_MESSAGES.UPDATE_CATEGORY_THANH_CONG,
-          data: updated,
+    try {
+      const updatedCategory = this.categoryService.updateCategory(categoryId, category);
+      if (!updatedCategory) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          message: CATEGORY_MESSAGES.KHONG_TIM_THAY_CATEGORY,
         });
-      })
-      .catch((err) => {
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-          message: "server error: " + err.message,
-        })
+      }
+      return res.status(HTTP_STATUS.OK).json({
+        data: updatedCategory,
+        message: CATEGORY_MESSAGES.UPDATE_CATEGORY_THANH_CONG,
       });
+    }
+    catch (err) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: CATEGORY_MESSAGES.SERVER_ERROR,
+      });
+    }
   }
 
   async delete(req: Request, res: Response) {
@@ -96,24 +106,24 @@ class CategoryController {
       });
     }
 
-    const requestsWithCategory = await RequestModel.find({ categoryId: categoryId });
-    if (requestsWithCategory.length) {
-      return res.status(HTTP_STATUS.CONFLICT).json({
-        message: CATEGORY_MESSAGES.CATEGORY_NAM_TRONG_NHIEU_YEU_CAU,
+    try {
+      const requestsWithCategory = await this.requestService.getRequestsWithCategory(categoryId);
+      if (requestsWithCategory.length) {
+        return res.status(HTTP_STATUS.CONFLICT).json({
+          message: CATEGORY_MESSAGES.CATEGORY_NAM_TRONG_NHIEU_YEU_CAU,
+        });
+      }
+
+      await this.categoryService.deleteCategory(categoryId);
+      return res.status(HTTP_STATUS.OK).json({
+        message: CATEGORY_MESSAGES.DELETE_CATEGORY_THANH_CONG,
       });
     }
-
-    Category.findByIdAndDelete(categoryId)
-      .then(() => {
-        return res.status(HTTP_STATUS.OK).json({
-          message: CATEGORY_MESSAGES.DELETE_CATEGORY_THANH_CONG,
-        });
-      })
-      .catch((err) => {
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-          message: "server error: " + err.message,
-        });
+    catch (err) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: CATEGORY_MESSAGES.SERVER_ERROR,
       });
+    };
   }
 }
 
