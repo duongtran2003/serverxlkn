@@ -18,7 +18,7 @@ class ActionService {
     return action;
   }
 
-  async getActionByName(acitonName: string) {
+  async getActionByName(actionName: string) {
     const action = await Action.findOne({ actionName: actionName }).select("-__v");
     return action;
   }
