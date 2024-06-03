@@ -5,6 +5,9 @@ import { IPeople } from "../interfaces/dbInterface";
 
 class AuthService {
   async login(res: Response, user: Document<unknown, {}, IPeople> & IPeople) {
+    user.$set({
+      password: undefined,
+    })
     const token = jwt.sign({ userId: user._id }, process.env.JWTSECRET!);
     res.cookie("jwt", token, {
       httpOnly: true,
