@@ -21,6 +21,9 @@ if (process.env.FRONTEND) {
 else {
   origins = ["http://localhost:3001"];
 }
+
+let port = process.env.PORT || '8000';
+
 app.use(cors({
   credentials: true,
   origin: origins,
@@ -35,8 +38,8 @@ app.use(express.urlencoded({
 
 app.use(router);
 
-app.listen('8000', () => {
-  console.log(`server's up at` );
+app.listen(port, () => {
+  console.log(`server's up at`);
 });
 
 
